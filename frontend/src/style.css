@@ -244,3 +244,9 @@ footer{font-size:12px;padding:22px 20px 26px}
 a.certificate-link{margin-top:12px;text-decoration:none}
 footer .footbrand{color:var(--ink)}
 @media(max-width:620px){.info-page{padding-top:30px}.info-page>h1{font-size:34px;letter-spacing:-1.4px}.info-grid{grid-template-columns:1fr;gap:11px;margin:22px 0}.info-card{padding:18px}.footer-links{gap:14px}footer{flex-wrap:wrap}.footer-links{margin-left:auto}}
+
+
+/* Marca Descomplica Cursos em cabeçalhos estreitos */
+header .brand{white-space:nowrap;font-size:clamp(14px,1.55vw,20px)}
+@media(max-width:620px){header .brand{font-size:14px;gap:6px}header .brand i{width:27px;height:27px}}
+@media(max-width:380px){.headright .plain{display:none}.headright{gap:5px}header .brand{font-size:13px}}

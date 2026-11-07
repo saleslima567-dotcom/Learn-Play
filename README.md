@@ -1,4 +1,4 @@
-# AV2 — LearnPlay
+# AV2 — descomplica cursos
 
 Plataforma demonstrativa de cursos online, desenvolvida com base na arquitetura dos Passos 1 e 2. O código do Passo 3 está em `frontend/`, `backend/` e `compose.yaml`.
 
