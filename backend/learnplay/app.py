@@ -175,7 +175,7 @@ def progress_for(student_id, course_id):
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, static_folder='static', static_url_path='/assets')
+    app = Flask(__name__, static_folder='static/assets', static_url_path='/assets')
     database_url = os.getenv('DATABASE_URL', 'sqlite:///learnplay.db')
     if database_url.startswith('postgres://'):
         database_url = 'postgresql+psycopg://' + database_url[len('postgres://'):]
@@ -216,7 +216,7 @@ def create_app(test_config=None):
 
     @app.get('/')
     def frontend_index():
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(os.path.join(app.root_path, 'static'), 'index.html')
 
     def require_user(*roles):
         def decorator(fn):
