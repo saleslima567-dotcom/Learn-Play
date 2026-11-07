@@ -1,7 +1,7 @@
-# Render Blueprint / YAML / Render / LearnPlay web service + managed PostgreSQL
+# Render Blueprint / YAML / Render / descomplica cursos web service + managed PostgreSQL
 services:
   - type: web
-    name: learnplay
+    name: descomplica-cursos
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
@@ -10,7 +10,7 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: learnplay-db
+          name: descomplica cursos-db
           property: connectionString
       - key: COOKIE_SECURE
         value: "true"
@@ -26,8 +26,8 @@ services:
         sync: false
 
 databases:
-  - name: learnplay-db
-    databaseName: learnplay
-    user: learnplay
+  - name: descomplica cursos-db
+    databaseName: descomplica cursos
+    user: descomplica cursos
     plan: free
     postgresMajorVersion: "17"
