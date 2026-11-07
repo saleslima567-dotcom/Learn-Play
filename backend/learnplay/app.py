@@ -108,6 +108,24 @@ class Enrollment(db.Model):
                 'created_at': self.created_at.isoformat(), 'progress_percent': progress_for(self.student_id, self.course_id)}
 
 
+class Favorite(db.Model):
+    __table_args__ = (UniqueConstraint('student_id', 'course_id', name='uq_favorite_student_course'),)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False, index=True)
+    course_id = db.Column(db.String(36), db.ForeignKey('course.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=now_utc)
+    course = db.relationship('Course')
+
+
+class CourseResume(db.Model):
+    __table_args__ = (UniqueConstraint('student_id', 'course_id', name='uq_resume_student_course'),)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    student_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False, index=True)
+    course_id = db.Column(db.String(36), db.ForeignKey('course.id'), nullable=False, index=True)
+    lesson_id = db.Column(db.String(36), db.ForeignKey('lesson.id'), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=now_utc, onupdate=now_utc)
+
+
 class LessonCompletion(db.Model):
     __table_args__ = (UniqueConstraint('student_id', 'lesson_id', name='uq_completion_student_lesson'),)
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -371,6 +389,65 @@ def create_app(test_config=None):
         items = Enrollment.query.filter_by(student_id=g.user.id).order_by(Enrollment.created_at.desc()).all()
         return jsonify(items=[e.public() for e in items])
 
+    @app.get('/api/v1/me/favorites')
+    @require_user('student')
+    def my_favorites():
+        favorites = Favorite.query.join(Course).filter(
+            Favorite.student_id == g.user.id, Course.status == 'published').order_by(Favorite.created_at.desc()).all()
+        return jsonify(items=[favorite.course.public() for favorite in favorites])
+
+    @app.post('/api/v1/me/favorites/<course_id>')
+    @require_user('student')
+    def add_favorite(course_id):
+        course = db.session.get(Course, course_id)
+        if not course or course.status != 'published':
+            return problem(404, 'Curso não encontrado')
+        favorite = Favorite.query.filter_by(student_id=g.user.id, course_id=course.id).first()
+        if not favorite:
+            db.session.add(Favorite(student_id=g.user.id, course_id=course.id))
+            db.session.commit()
+        return jsonify(course=course.public()), 201
+
+    @app.delete('/api/v1/me/favorites/<course_id>')
+    @require_user('student')
+    def remove_favorite(course_id):
+        favorite = Favorite.query.filter_by(student_id=g.user.id, course_id=course_id).first()
+        if favorite:
+            db.session.delete(favorite)
+            db.session.commit()
+        return '', 204
+
+    @app.get('/api/v1/me/resume/<course_id>')
+    @require_user('student')
+    def get_course_resume(course_id):
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').first()
+        if not enrollment:
+            return problem(403, 'Matrícula ativa necessária')
+        resume = CourseResume.query.filter_by(student_id=g.user.id, course_id=course_id).first()
+        return jsonify(course_id=course_id, lesson_id=resume.lesson_id if resume else None,
+                       updated_at=resume.updated_at.isoformat() if resume else None)
+
+    @app.put('/api/v1/me/resume/<course_id>')
+    @require_user('student')
+    def save_course_resume(course_id):
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').first()
+        if not enrollment:
+            return problem(403, 'Matrícula ativa necessária')
+        lesson_id = str((request.get_json(silent=True) or {}).get('lesson_id', ''))
+        lesson = db.session.query(Lesson).join(Section).filter(
+            Lesson.id == lesson_id, Section.course_id == course_id, Lesson.status == 'published').first()
+        if not lesson:
+            return problem(404, 'Aula publicada não encontrada neste curso')
+        resume = CourseResume.query.filter_by(student_id=g.user.id, course_id=course_id).first()
+        if resume:
+            resume.lesson_id = lesson.id
+            resume.updated_at = now_utc()
+        else:
+            resume = CourseResume(student_id=g.user.id, course_id=course_id, lesson_id=lesson.id)
+            db.session.add(resume)
+        db.session.commit()
+        return jsonify(course_id=course_id, lesson_id=resume.lesson_id, updated_at=resume.updated_at.isoformat())
+
     @app.get('/api/v1/courses/<course_id>/lessons')
     @require_user('student')
     def course_lessons(course_id):
@@ -612,6 +689,11 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
         if 'status' in data:
             if data['status'] not in ('active', 'suspended'):
                 return problem(422, 'Estado inválido')
+            if data['status'] == 'suspended' and user.status != 'suspended':
+                if user.id == g.user.id:
+                    return problem(409, 'Você não pode suspender a própria conta administrativa')
+                if user.role == 'admin' and User.query.filter_by(role='admin', status='active').count() <= 1:
+                    return problem(409, 'A plataforma precisa manter ao menos um administrador ativo')
             user.status = data['status']
         db.session.commit()
         return jsonify(user=user.public())

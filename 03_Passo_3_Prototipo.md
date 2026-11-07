@@ -19,7 +19,9 @@ Entregar um protótipo web executável da descomplica cursos que demonstre os fl
 - aulas protegidas por matrícula ativa e conclusão idempotente com cálculo de progresso;
 - avaliação com alternativas, correção no backend, nota e limite de tentativas;
 - painel do professor para criar curso, acrescentar aula publicada, definir avaliação e publicar após existir aula publicada;
-- painel administrativo para alterar perfil de uma conta;
+- painel administrativo com busca de contas, alteração de perfil e suspensão/reativação de acesso;
+- favoritos persistidos por aluno e atalho de navegação para a lista pessoal;
+- salvamento da última aula acessada por curso para retomar o estudo;
 - páginas Sobre e Ajuda com explicação dos fluxos reais e demonstrativos;
 - certificado HTML imprimível após matrícula ativa e conclusão de todas as aulas publicadas;
 - outbox persistente com worker de demonstração e health checks.

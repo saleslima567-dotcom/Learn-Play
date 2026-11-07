@@ -214,6 +214,72 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Enrollment' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/favorites:
+    get:
+      tags: [Catalog]
+      summary: Listar cursos favoritos do aluno atual
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200':
+          description: Lista de cursos publicados salvos pelo aluno
+          content:
+            application/json:
+              schema: { type: object, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Course' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /me/favorites/{courseId}:
+    post:
+      tags: [Catalog]
+      summary: Salvar um curso publicado nos favoritos
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '201': { description: Curso salvo nos favoritos }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Catalog]
+      summary: Remover um curso dos favoritos
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '204': { description: Curso removido dos favoritos }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /me/resume/{courseId}:
+    get:
+      tags: [Progress]
+      summary: Consultar a última aula acessada do curso
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200': { description: Curso e última aula acessada; lesson_id pode ser nulo }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Progress]
+      summary: Salvar a última aula acessada do curso
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lesson_id]
+              properties:
+                lesson_id: { type: string, format: uuid }
+      responses:
+        '200': { description: Aula registrada para retomada posterior }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /me/enrollments/{enrollmentId}/demo-payment:
     post:
       tags: [Enrollments]

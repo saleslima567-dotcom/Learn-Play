@@ -250,3 +250,16 @@ footer .footbrand{color:var(--ink)}
 header .brand{white-space:nowrap;font-size:clamp(14px,1.55vw,20px)}
 @media(max-width:620px){header .brand{font-size:14px;gap:6px}header .brand i{width:27px;height:27px}}
 @media(max-width:380px){.headright .plain{display:none}.headright{gap:5px}header .brand{font-size:13px}}
+
+
+/* Favoritos e gestão de contas */
+.favorite-toggle.active{color:#d94f70!important}
+.admin-tools{display:flex;align-items:center;gap:12px;margin:10px 0 14px}
+.admin-tools .search{width:min(100%,430px);height:40px}
+.admin-tools>small{color:var(--muted);font-size:11px;white-space:nowrap}
+.admin-actions{display:flex;align-items:center;gap:8px}
+.admin-actions .status-action{border:1px solid color-mix(in srgb,var(--purple) 24%,transparent);border-radius:7px;background:var(--accent-soft);color:var(--purple);padding:8px 10px;font-size:10px;font-weight:700;transition:transform .18s,background .18s}
+.admin-actions .status-action:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--purple) 16%,var(--surface))}
+.admin-actions .status-action:disabled,.admin-actions select:disabled{opacity:.55;cursor:not-allowed}
+.adminrow{gap:12px}
+@media(max-width:620px){.admin-tools{align-items:stretch;flex-direction:column}.admin-tools .search{width:100%}.adminrow{align-items:flex-start;flex-direction:column}.admin-actions{width:100%;justify-content:space-between}.admin-actions select{max-width:58%}}
