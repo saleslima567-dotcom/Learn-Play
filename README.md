@@ -33,7 +33,7 @@ O repositório inclui `render.yaml` (Blueprint) e o Dockerfile da raiz. O contai
 1. Envie a pasta do trabalho para um repositório GitHub. Não envie `.env` nem credenciais.
 2. No Render, crie um Blueprint e conecte esse repositório. O Render lê `render.yaml` e mostra os serviços antes de criá-los.
 3. Quando solicitado, informe três senhas fortes diferentes para as contas de demonstração (aluna, professor e administrador). Guarde-as; o Render não as exibe novamente no assistente.
-4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL `onrender.com` do serviço `learnplay`.
+4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL `onrender.com` do serviço `descomplica-cursos`.
 
 O plano gratuito do PostgreSQL expira após 30 dias e os serviços web gratuitos podem dormir quando ficam sem tráfego. Para manter o banco e os dados por mais tempo, escolha um plano PostgreSQL pago antes da expiração. Consulte [limitações dos planos gratuitos do Render](https://render.com/docs/free).
 

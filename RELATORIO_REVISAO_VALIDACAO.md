@@ -1,4 +1,4 @@
-# Relatório de revisão e validação — AV2 LearnPlay
+# Relatório de revisão e validação — AV2 descomplica cursos
 
 **Data:** 7 de novembro de 2026  
 **Escopo:** todos os artefatos produzidos nos Passos 1 e 2.  

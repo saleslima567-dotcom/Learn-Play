@@ -1,4 +1,4 @@
-# Python / backend/init_db.py / Python 3.12 / LearnPlay one-time database initializer
+# Python / backend/init_db.py / Python 3.12 / descomplica cursos one-time database initializer
 import os
 
 from learnplay.app import app, db, seed_demo_data

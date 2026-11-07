@@ -1,4 +1,4 @@
-# Python / backend/wsgi.py / Python 3.12 + Gunicorn / LearnPlay API runtime
+# Python / backend/wsgi.py / Python 3.12 + Gunicorn / descomplica cursos API runtime
 import os
 
 from learnplay.app import app

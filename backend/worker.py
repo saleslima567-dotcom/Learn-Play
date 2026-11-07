@@ -1,4 +1,4 @@
-# Python / backend/worker.py / Python 3.12 / LearnPlay notification outbox worker
+# Python / backend/worker.py / Python 3.12 / descomplica cursos notification outbox worker
 import time
 from learnplay.app import create_app, db, NotificationOutbox
 

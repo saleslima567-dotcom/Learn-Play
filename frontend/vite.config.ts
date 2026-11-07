@@ -1,4 +1,4 @@
-// TypeScript / frontend/vite.config.ts / Node 24 + Vite 8 / LearnPlay web client
+// TypeScript / frontend/vite.config.ts / Node 24 + Vite 8 / descomplica cursos web client
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
