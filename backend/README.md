@@ -1,6 +1,6 @@
 # LearnPlay API
 
-Flask REST API em `backend/learnplay/app.py`; sessão de servidor persistida no banco. O arquivo `wsgi.py` cria o esquema inicial do protótipo e popula dados de demonstração. PostgreSQL é o padrão do Compose; SQLite é usado na execução local/testes.
+Flask REST API em `backend/learnplay/app.py`; sessão de servidor persistida no banco. `init_db.py` inicializa o esquema e os dados de demonstração uma vez antes do Gunicorn; `wsgi.py` chama essa inicialização quando executado diretamente no modo local. PostgreSQL é o padrão do Compose/Render; SQLite é usado na execução local/testes.
 
 `python -m pip install -r requirements.txt`
 `python wsgi.py` (na pasta backend)

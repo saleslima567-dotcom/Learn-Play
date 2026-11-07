@@ -4,6 +4,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY learnplay ./learnplay
-COPY wsgi.py worker.py ./
+COPY wsgi.py worker.py init_db.py ./
 EXPOSE 5000
-CMD ["gunicorn", "--bind=0.0.0.0:5000", "--workers=2", "wsgi:app"]
+CMD ["sh", "-c", "python init_db.py && exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 wsgi:app"]

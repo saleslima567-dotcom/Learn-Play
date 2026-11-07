@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./
 COPY --from=frontend-build /frontend/dist ./learnplay/static
 EXPOSE 10000
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 wsgi:app"]
+CMD ["sh", "-c", "python init_db.py && exec gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 wsgi:app"]

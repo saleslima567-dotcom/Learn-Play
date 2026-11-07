@@ -1,7 +1,11 @@
 # Python / backend/wsgi.py / Python 3.12 + Gunicorn / LearnPlay API runtime
-from learnplay.app import app, db, seed_demo_data
+import os
 
-with app.app_context():
-    db.create_all()
-    if __import__('os').getenv('SEED_DEMO', 'true').lower() == 'true':
-        seed_demo_data()
+from learnplay.app import app
+
+
+if __name__ == '__main__':
+    from init_db import initialize_database
+
+    initialize_database()
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', '5000')), debug=False)
