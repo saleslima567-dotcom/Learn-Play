@@ -20,6 +20,8 @@ Entregar um protótipo web executável da LearnPlay que demonstre os fluxos cent
 - avaliação com alternativas, correção no backend, nota e limite de tentativas;
 - painel do professor para criar curso, acrescentar aula publicada, definir avaliação e publicar após existir aula publicada;
 - painel administrativo para alterar perfil de uma conta;
+- páginas Sobre e Ajuda com explicação dos fluxos reais e demonstrativos;
+- certificado HTML imprimível após matrícula ativa e conclusão de todas as aulas publicadas;
 - outbox persistente com worker de demonstração e health checks.
 
 ## 3. Organização do código
@@ -52,6 +54,8 @@ contratos/openapi.yaml   contrato HTTP atualizado para as rotas implementadas
 | Professor cria aula e avaliação e publica curso válido | `test_instructor_can_author_lessons_assessment_and_publish`. |
 | Tentativa é corrigida no servidor e bloqueada após o limite | `test_assessment_attempts_are_limited_and_score_is_computed`. |
 | Webhook exige HMAC e evento repetido não duplica efeitos | `test_payment_webhook_signature_and_duplicate_event_are_idempotent`. |
+| Certificado só é emitido após conclusão integral | `GET /api/v1/me/certificates/{courseId}` verifica matrícula e progresso. |
+| A ajuda explica os limites das integrações | Páginas Sobre e Ajuda descrevem pagamentos e player demonstrativos. |
 
 **Resultado da validação desta entrega:** 8 testes automatizados passaram; o frontend TypeScript foi compilado e o bundle de produção do Vite foi gerado com sucesso. A API foi inicializada com SQLite e a rota pública de catálogo foi consultada. O Compose/PostgreSQL não foi iniciado nessa validação. A primeira implantação no Render encontrou uma corrida na criação do esquema; `init_db.py` agora executa uma única inicialização serializada antes do Gunicorn. O novo container ainda precisa ser publicado para validar a correção no Render.
 

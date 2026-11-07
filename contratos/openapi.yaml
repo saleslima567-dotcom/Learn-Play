@@ -274,6 +274,28 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /me/certificates/{courseId}:
+    get:
+      tags: [Progress]
+      summary: Emitir certificado imprimível do curso concluído
+      description: Requer matrícula ativa e conclusão de todas as aulas publicadas.
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Página HTML do certificado, pronta para impressão ou salvamento em PDF
+          content:
+            text/html:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Curso ainda não concluído
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
   /courses/{courseId}/lessons:
     get:
       tags: [Catalog]
