@@ -89,3 +89,139 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @keyframes modal-in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:620px){header{background:color-mix(in srgb,var(--surface) 94%,transparent)}nav{background:var(--surface-raised);border-color:var(--line);box-shadow:var(--shadow)}.hero{padding-top:48px}.hero:before{inset:12px 4px 10px;border-radius:24px}.sectiontop{gap:8px}.sectiontop>small{color:var(--muted)}.theme-toggle{width:33px;height:33px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* CSS / frontend/src/style.css / Vite browser runtime / LearnPlay typography and catalog refinement */
+:root{--text-body:16px;--text-small:12px;--section-space:76px}
+body{min-width:320px;font-size:var(--text-body);line-height:1.6}
+header{height:78px;gap:38px;padding-inline:28px}
+.brand{font-size:22px;gap:10px}
+.brand i{width:36px;height:36px;border-radius:12px}
+nav{gap:20px}
+nav button,.plain{font-size:14px}
+.headright{gap:10px}
+.hello{font-size:14px}
+.primary{font-size:14px;padding:13px 19px;border-radius:11px}
+.tiny{font-size:12px;padding:10px 14px}
+.eyebrow{font-size:11px;letter-spacing:1.35px}
+.hero{min-height:500px;padding-top:76px;padding-bottom:72px}
+.hero h1{font-size:clamp(44px,5.2vw,64px);line-height:1.07;letter-spacing:-3px;margin:18px 0 16px}
+.hero>div:first-child>p{font-size:17px;line-height:1.7;max-width:460px}
+.heroart{height:360px}
+.bigcard{width:min(360px,90%);padding:19px}
+.bigcard>small{font-size:11px}
+.bigcard>b{font-size:16px}
+.codebox{height:176px;margin-block:17px}
+.codebox>div{font-size:10px}
+.codebox pre{font-size:13px}
+.float{font-size:12px;padding:13px 15px}
+.float small{font-size:10px}
+.social{gap:12px;margin-top:28px}
+.social>span{font-size:13px;padding:8px 10px}
+.social small,.social b{font-size:13px}
+.proof{padding:22px 8px}
+.proof div{grid-template-columns:30px auto;column-gap:11px}
+.proof svg{width:21px}
+.proof b{font-size:13px}
+.proof small{font-size:11px;margin-top:3px}
+.catalog{padding:var(--section-space) 0 64px}
+.sectiontop h2{font-size:clamp(27px,3vw,36px);letter-spacing:-1.3px}
+.sectiontop p{font-size:15px}
+.sectiontop>small{font-size:12px}
+.filters{margin:28px 0 20px}
+.tabs{gap:8px}
+.tabs button{font-size:13px;padding:9px 14px}
+.search{width:290px;height:42px;padding-inline:12px;border-radius:10px}
+.search input{font-size:13px}
+.grid{gap:19px}
+.card{border-radius:17px}
+.cover{height:170px;font-size:60px;border-radius:0;}
+.cover:before,.cover:after{content:"";position:absolute;pointer-events:none;border:1px solid #ffffff52;border-radius:50%;transition:transform .5s ease,opacity .5s ease}
+.cover:before{width:190px;height:190px;top:-105px;right:-42px;opacity:.85}
+.cover:after{width:130px;height:130px;bottom:-92px;left:-40px;opacity:.55}
+.cover b{position:relative;z-index:1;font-size:55px;transition:transform .35s cubic-bezier(.2,.8,.2,1);text-shadow:0 8px 25px #17142a24}
+.card:hover .cover b{transform:scale(1.08) rotate(-5deg)}
+.card:hover .cover:before{transform:scale(1.13) translate(-8px,6px)}
+.cover.violet,.detailcover.violet,.thumb.violet,.mycover.violet{background:linear-gradient(140deg,#6349d1,#a991ff 70%,#d2c8ff);color:#fff}
+.cover.orange,.detailcover.orange,.thumb.orange,.mycover.orange{background:linear-gradient(140deg,#d86a45,#f4a66d 68%,#ffd3a1);color:#fff}
+.cover.blue,.detailcover.blue,.thumb.blue,.mycover.blue{background:linear-gradient(140deg,#2968b5,#559ce6 68%,#a7d5ff);color:#fff}
+.cover.green,.detailcover.green,.thumb.green,.mycover.green{background:linear-gradient(140deg,#258162,#45b98a 68%,#a5e6c1);color:#fff}
+.cover small{z-index:2;top:13px;left:13px;font-size:10px;letter-spacing:.7px;padding:6px 8px;border-radius:6px;background:#ffffffdf;color:#25223d}
+.cover span{z-index:2;right:12px;bottom:12px;font-size:11px;padding:6px 9px;border-radius:7px;background:#ffffffdf;color:#25223d}
+.cardbody{padding:16px}
+.meta{font-size:12px}
+.meta svg{width:14px;height:14px}
+.rating{font-size:12px;gap:5px}
+.ctitle{height:48px;margin-top:10px;font-size:15px;line-height:1.45}
+.teacher{font-size:12px;margin:11px 0 13px}
+.cardfoot{padding-top:12px}
+.cardfoot>b{font-size:15px}
+.cardfoot button{width:32px;height:32px;border-radius:9px}
+.banner{padding:23px 27px;gap:16px}
+.banner i{width:48px;height:48px;border-radius:13px}
+.banner b{font-size:15px}
+.banner small{font-size:12px}
+.banner button{font-size:12px;padding:11px 14px;border-radius:9px}
+footer{font-size:12px;padding:22px 20px 26px}
+.footbrand{font-size:18px}
+.detail,.dash,.learning{padding-top:36px;padding-bottom:80px}
+.back{font-size:13px}
+.detailgrid{grid-template-columns:minmax(0,1fr) 320px;gap:42px;margin-top:22px}
+.detailcover{height:270px;border-radius:17px;margin-bottom:30px}
+.detailcover small,.detailcover span{font-size:11px}
+.detailcover b{font-size:160px;color:#fff}
+.detail h1{font-size:clamp(30px,4vw,42px);line-height:1.15}
+.detail p{font-size:15px;line-height:1.8}
+.stats{font-size:13px;line-height:1.9}
+.detail h3{font-size:19px}
+.syllabus>b,.syllabus>div{font-size:13px;padding:15px}
+.syllabus small{font-size:12px}
+.detail aside,.panel{padding:21px;border-radius:17px}
+.thumb{height:156px;border-radius:12px;font-size:88px}
+.price{font-size:28px}
+.secure,.detail aside>p,.detail aside>small{font-size:12px}
+.detail aside>p{margin:14px 0}
+.dash h1{font-size:clamp(34px,4.5vw,48px)}
+.dash>p{font-size:15px;line-height:1.7}
+.panel h2{font-size:20px}
+.panel label{font-size:13px;gap:8px;margin:14px 0}
+.panel input,.panel textarea,.panel select,.adminrow select{font-size:14px;padding:12px;border-radius:9px}
+.row{font-size:14px;padding:15px 4px}
+.row small{font-size:12px}
+.rowactions button{font-size:11px;padding:8px 10px;border-radius:8px}
+.mygrid{gap:19px}
+.mycard{grid-template-columns:140px 1fr}
+.mycard>div:nth-child(2){padding:17px}
+.mycover{font-size:62px}
+.mycard small{font-size:11px}
+.mycard h3{font-size:16px;line-height:1.4}
+.mycard .wide{font-size:12px;padding:11px}
+.learnhead{font-size:13px;padding:14px 0}
+.learnlayout{grid-template-columns:300px 1fr;gap:26px;padding-top:24px}
+.learnlayout>aside,.quiz{padding:17px;border-radius:14px}
+.learnlayout aside>b{font-size:11px;padding:9px}
+.learnlayout aside button{font-size:13px;padding:14px 9px}
+.video{height:420px;border-radius:15px}
+.video button{width:68px;height:68px}
+.video small{font-size:11px}
+.learnlayout section>h2,.quiz h2{font-size:26px}
+.learnlayout section>p{font-size:14px}
+.quiz legend{font-size:14px}
+.quiz label{font-size:13px;padding:12px}
+.veil{padding:24px}
+.modal{padding:32px;width:min(460px,100%)}
+.modal h2{font-size:29px}
+.modal>p{font-size:14px}
+.modal form label{font-size:13px}
+.modal input{font-size:14px;padding:12px}
+.switch{font-size:12px}
+.switch button{font-size:12px}
+.demo{font-size:11px;line-height:1.6}
+.demo b{font-size:12px}
+.toast{font-size:13px;padding:14px 17px;border-radius:12px}
+.emptybox{padding:48px}
+.emptybox h2{font-size:21px}
+.emptybox p,.empty{font-size:14px}
+.loading{font-size:15px}
+@media(max-width:1140px){.catalog,.banner,.proof{margin-left:26px;margin-right:26px}.detail,.dash,.learning{margin-left:26px;margin-right:26px}.grid{gap:15px}}
+@media(max-width:800px){header{gap:16px;padding-inline:18px}.hero{padding-top:52px;min-height:440px}.hero h1{font-size:48px}.proof{margin-inline:22px}.proof b{font-size:11px}.proof small{font-size:10px}.catalog{padding-top:58px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.cover{height:150px}.cardbody{padding:13px}.ctitle{font-size:14px}.detailgrid{grid-template-columns:minmax(0,1fr) 270px;gap:22px}.learnlayout{grid-template-columns:235px 1fr;gap:17px}.video{height:310px}}
+@media(max-width:620px){header{height:68px;padding-inline:13px;gap:8px}.brand{font-size:19px}.brand i{width:31px;height:31px}.headright{gap:6px}.hello{display:none}.theme-toggle{width:35px;height:35px}nav{top:64px;left:10px;right:10px;padding:12px}nav button{font-size:14px;padding:12px}.hero{padding:42px 20px 12px;min-height:0}.hero h1{font-size:44px;letter-spacing:-2px}.hero>div:first-child>p{font-size:15px}.heroart{height:260px;transform:scale(.82);margin:17px auto -35px}.social small,.social b{font-size:12px}.proof{margin-inline:12px;padding:16px 3px;row-gap:15px}.proof b{font-size:11px}.proof small{font-size:10px}.catalog{margin:0;padding:48px 14px 42px}.sectiontop{align-items:start}.sectiontop h2{font-size:25px;line-height:1.2}.sectiontop p{font-size:13px;line-height:1.5}.sectiontop>small{font-size:10px;white-space:normal;text-align:right}.filters{margin:20px 0 15px}.tabs{gap:5px}.tabs button{font-size:12px;padding:8px 11px}.search{width:100%;height:42px;margin-top:5px}.grid{gap:11px}.cover{height:122px;font-size:44px}.cover:before{width:145px;height:145px;top:-82px;right:-45px}.cover:after{width:95px;height:95px;bottom:-67px;left:-35px}.cover b{font-size:43px}.cover small{font-size:8px;top:8px;left:8px;padding:5px 6px}.cover span{font-size:9px;right:8px;bottom:8px;padding:5px 6px}.cardbody{padding:10px}.meta{font-size:10px}.meta svg{width:12px;height:12px}.rating{font-size:10px}.ctitle{font-size:12px;line-height:1.35;height:43px}.teacher{font-size:10px;margin:7px 0 9px}.cardfoot>b{font-size:12px}.cardfoot button{width:27px;height:27px}.banner{margin:0 13px 30px;padding:15px;gap:10px;flex-wrap:wrap}.banner i{width:38px;height:38px}.banner b{font-size:12px}.banner small{font-size:10px}.banner button{font-size:10px;margin-left:48px;padding:9px}.detail,.dash,.learning{margin:0;padding:25px 15px 50px}.detailgrid{grid-template-columns:1fr;gap:14px}.detailcover{height:195px}.detailcover b{font-size:125px}.detail h1{font-size:29px}.detail p{font-size:14px}.stats{font-size:11px}.detail aside{position:static;display:block;padding:17px}.thumb{height:135px;font-size:70px}.price{font-size:24px}.dash h1{font-size:34px}.dash>p{font-size:14px}.mygrid{grid-template-columns:1fr;gap:13px}.mycard{grid-template-columns:105px 1fr}.mycover{font-size:47px}.mycard>div:nth-child(2){padding:12px}.mycard h3{font-size:14px}.panels{grid-template-columns:1fr;gap:12px}.panel{padding:17px}.learnlayout{grid-template-columns:1fr;gap:15px}.learnlayout>aside{max-height:240px;overflow:auto}.video{height:235px}.learnlayout section>h2,.quiz h2{font-size:21px}.modal{padding:26px 20px 20px}.modal h2{font-size:25px}.toast{left:12px;right:12px;top:77px}footer{padding:17px 15px;gap:12px;font-size:10px}footer small{order:3;width:100%;text-align:center}.emptybox{padding:30px 18px}}
