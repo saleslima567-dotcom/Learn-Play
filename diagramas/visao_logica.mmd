@@ -1,0 +1,28 @@
+flowchart TB
+  subgraph layers[Monolito modular em camadas]
+    ui[Interface Web React]
+    api[Endpoints REST Flask]
+    usecases[Casos de uso]
+    modules[Modulos de dominio]
+    repo[Interfaces de repositorio]
+    adapters[Adaptadores: PostgreSQL, S3, pagamento, e-mail]
+    ui -->|HTTPS / JSON| api --> usecases --> modules --> repo --> adapters
+  end
+  subgraph domain[Modulos de dominio]
+    identity[Identidade e acesso]
+    catalog[Catalogo]
+    enrollment[Matriculas]
+    content[Conteudo]
+    progress[Progresso]
+    assessments[Avaliacoes]
+    notifications[Notificacoes]
+    administration[Administracao]
+  end
+  modules --- identity
+  modules --- catalog
+  modules --- enrollment
+  modules --- content
+  modules --- progress
+  modules --- assessments
+  modules --- notifications
+  modules --- administration

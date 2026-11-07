@@ -1,0 +1,690 @@
+openapi: 3.1.0
+info:
+  title: LearnPlay API
+  version: 1.0.0
+  description: Contratos iniciais da plataforma de cursos online — Passo 2 da AV2.
+servers:
+  - url: https://api.learnplay.example/api/v1
+    description: URL ilustrativa; substituir pelo host definido na publicação.
+tags:
+  - name: Auth
+  - name: Catalog
+  - name: Enrollments
+  - name: Assessments
+  - name: Admin
+  - name: Progress
+  - name: Integrations
+paths:
+  /me:
+    get:
+      tags: [Auth]
+      summary: Consultar perfil autenticado
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200':
+          description: Perfil atual
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar conta de aluno
+      security: [{ CsrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Conta criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /auth/csrf:
+    get:
+      tags: [Auth]
+      summary: Obter token CSRF associado a sessao anonima ou autenticada
+      security: []
+      responses:
+        '200':
+          description: Token para enviar no header X-CSRF-Token nas operacoes mutaveis
+          headers:
+            Set-Cookie:
+              description: Sessao anonima/atualizada; HttpOnly, Secure e SameSite=Lax
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [csrf_token]
+                properties:
+                  csrf_token: { type: string, minLength: 32 }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autenticar e iniciar sessão
+      security: [{ CsrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password, minLength: 10 }
+      responses:
+        '200':
+          description: Sessão rotacionada; cookie HttpOnly, Secure e SameSite configurado e novo token CSRF devolvido
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, csrf_token]
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  csrf_token: { type: string, minLength: 32 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          description: Muitas tentativas de autenticação
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revogar sessão atual
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      responses:
+        '204':
+          description: Sessao encerrada; cookie limpo e registro revogado
+          headers:
+            Set-Cookie:
+              description: Limpa o cookie learnplay_session
+              schema: { type: string }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /courses:
+    get:
+      tags: [Catalog]
+      summary: Listar cursos publicados
+      security: []
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string, maxLength: 100 }
+      responses:
+        '200':
+          description: Página de cursos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoursePage'
+  /courses/{courseId}:
+    get:
+      tags: [Catalog]
+      summary: Consultar detalhes públicos de curso
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Curso publicado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Course' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /courses/{courseId}/enrollments:
+    post:
+      tags: [Enrollments]
+      summary: Solicitar matrícula
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - in: header
+          name: X-Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 128 }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coupon_code: { type: string, maxLength: 64 }
+      responses:
+        '201':
+          description: Matrícula gratuita ativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Enrollment' }
+        '202':
+          description: Matrícula pendente de checkout/pagamento
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Enrollment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { description: Integração externa temporariamente indisponível }
+  /me/enrollments:
+    get:
+      tags: [Enrollments]
+      summary: Listar matrículas do aluno atual
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200':
+          description: Matrículas do usuário autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Enrollment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/enrollments/{enrollmentId}/demo-payment:
+    post:
+      tags: [Enrollments]
+      summary: Aprovar matrícula paga somente no simulador local
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - in: path
+          name: enrollmentId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Matrícula demonstrativa ativada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /lessons/{lessonId}/completion:
+    put:
+      tags: [Progress]
+      summary: Marcar aula como concluída de forma idempotente
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Conclusão confirmada e progresso atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lesson_id, completed_at, progress_percent]
+                properties:
+                  lesson_id: { type: string, format: uuid }
+                  completed_at: { type: string, format: date-time }
+                  progress_percent: { type: number, minimum: 0, maximum: 100 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/progress/{courseId}:
+    get:
+      tags: [Progress]
+      summary: Consultar progresso do aluno atual
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Progresso calculado para o curso
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [course_id, progress_percent]
+                properties:
+                  course_id: { type: string, format: uuid }
+                  progress_percent: { type: number, minimum: 0, maximum: 100 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /courses/{courseId}/lessons:
+    get:
+      tags: [Catalog]
+      summary: Listar aulas acessiveis ao aluno matriculado
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Aulas publicadas com estado de conclusao do aluno
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, position, completed]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        position: { type: integer, minimum: 1 }
+                        completed: { type: boolean }
+                        media_url: { type: string, format: uri, nullable: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /courses/{courseId}/assessments/{assessmentId}/attempts:
+    post:
+      tags: [Enrollments]
+      summary: Enviar tentativa de avaliacao
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - in: path
+          name: assessmentId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers:
+                  type: object
+                  additionalProperties: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Tentativa registrada; nota calculada no servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [attempt_number, score, best_score, passed, attempts_remaining]
+                properties:
+                  attempt_number: { type: integer, minimum: 1 }
+                  score: { type: number, minimum: 0, maximum: 100 }
+                  best_score: { type: number, minimum: 0, maximum: 100 }
+                  passed: { type: boolean }
+                  attempts_remaining: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /instructor/courses/{courseId}:
+    patch:
+      tags: [Catalog]
+      summary: Atualizar curso sob responsabilidade do professor
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                title: { type: string, minLength: 3, maxLength: 160 }
+                description: { type: string, maxLength: 20000 }
+                price: { type: number, minimum: 0 }
+                currency: { type: string, minLength: 3, maxLength: 3 }
+                status: { type: string, enum: [draft, published, archived] }
+      responses:
+        '200': { description: Curso atualizado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /instructor/courses/{courseId}/lessons:
+    post:
+      tags: [Catalog]
+      summary: Criar aula em curso do professor
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string, minLength: 3, maxLength: 140 }
+                description: { type: string, maxLength: 20000 }
+                duration_seconds: { type: integer, minimum: 60, maximum: 14400 }
+                status: { type: string, enum: [draft, published] }
+      responses:
+        '201': { description: Aula criada }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /instructor/courses/{courseId}/lessons/{lessonId}:
+    patch:
+      tags: [Catalog]
+      summary: Atualizar aula do curso
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                title: { type: string, maxLength: 140 }
+                description: { type: string }
+                status: { type: string, enum: [draft, published, archived] }
+      responses:
+        '200': { description: Aula atualizada }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /instructor/courses/{courseId}/assessment:
+    put:
+      tags: [Assessments]
+      summary: Criar ou substituir avaliação e questões de um curso
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, questions]
+              properties:
+                title: { type: string, maxLength: 140 }
+                passing_score: { type: integer, minimum: 0, maximum: 100 }
+                max_attempts: { type: integer, minimum: 1, maximum: 10 }
+                questions: { type: array, minItems: 1, maxItems: 30, items: { type: object } }
+      responses:
+        '200': { description: Avaliação criada ou substituída }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /health/live:
+    get:
+      tags: [Admin]
+      summary: Verificar se o processo da API esta vivo
+      security: []
+      responses:
+        '200':
+          description: Processo ativo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [ok] }
+  /health/ready:
+    get:
+      tags: [Admin]
+      summary: Verificar se a API esta pronta para receber trafego
+      description: Consulta dependencias essenciais, sem expor detalhes internos.
+      security: []
+      responses:
+        '200': { description: Dependencias essenciais prontas }
+        '503': { description: API nao pronta }
+  /instructor/courses:
+    get:
+      tags: [Catalog]
+      summary: Listar cursos do professor atual
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200': { description: Cursos do professor autenticado }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Catalog]
+      summary: Criar curso em estado de rascunho
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [title, description, price, currency]
+              properties:
+                title: { type: string, minLength: 3, maxLength: 160 }
+                description: { type: string, maxLength: 20000 }
+                price: { type: number, minimum: 0 }
+                currency: { type: string, minLength: 3, maxLength: 3 }
+      responses:
+        '201':
+          description: Curso criado como rascunho
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Course' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Listar contas para administração
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200': { description: Contas e perfis da plataforma }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/users/{userId}:
+    patch:
+      tags: [Admin]
+      summary: Alterar perfil ou estado de usuario
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                role: { type: string, enum: [student, instructor, admin] }
+                status: { type: string, enum: [active, suspended] }
+      responses:
+        '200':
+          description: Usuario atualizado; acao registrada em auditoria
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /integrations/payments/webhook:
+    post:
+      tags: [Integrations]
+      summary: Receber evento de pagamento assinado com HMAC-SHA256
+      description: Confere assinatura do corpo bruto, ID único do evento, valor e BRL antes de ativar matrícula; repetição válida não repete efeitos.
+      security: []
+      parameters:
+        - in: header
+          name: X-Webhook-Signature
+          required: true
+          schema: { type: string, pattern: '^[a-f0-9]{64}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_id, enrollment_id, status, amount, currency]
+              properties:
+                event_id: { type: string, maxLength: 160 }
+                enrollment_id: { type: string, format: uuid }
+                status: { type: string, enum: [approved, failed] }
+                amount: { type: number, minimum: 0 }
+                currency: { type: string, enum: [BRL] }
+      responses:
+        '200': { description: Evento aplicado ou repetido sem efeito adicional }
+        '401': { description: Assinatura HMAC inválida }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { description: Valor/moeda divergente enviado para revisão }
+components:
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: learnplay_session
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  parameters:
+    CourseId:
+      in: path
+      name: courseId
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [name, email, password]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, format: password, minLength: 10, maxLength: 128 }
+    User:
+      type: object
+      required: [id, name, email, role, status]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [student, instructor, admin] }
+        status: { type: string, enum: [active, suspended] }
+    Course:
+      type: object
+      required: [id, title, description, instructor, price, category, level, lesson_count]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        instructor: { type: string }
+        price: { type: number, minimum: 0 }
+        category: { type: string }
+        level: { type: string }
+        status: { type: string }
+        cover_color: { type: string }
+        duration_minutes: { type: integer, minimum: 0 }
+        lesson_count: { type: integer, minimum: 0 }
+    CoursePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Course' }
+        next_cursor: { type: string, nullable: true }
+    Enrollment:
+      type: object
+      required: [id, course_id, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        course_id: { type: string, format: uuid }
+        status: { type: string, enum: [pending_payment, active, payment_failed, expired, cancelled] }
+        created_at: { type: string, format: date-time }
+        checkout_url: { type: string, format: uri, nullable: true }
+    Problem:
+      type: object
+      required: [title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        request_id: { type: string }
+  responses:
+    Unauthorized:
+      description: Autenticação necessária ou inválida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Usuário sem permissão para o recurso
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Recurso não encontrado ou não visível
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Estado atual impede a operação
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationError:
+      description: Dados inválidos
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

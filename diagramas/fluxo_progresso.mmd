@@ -1,0 +1,18 @@
+sequenceDiagram
+  actor Aluno
+  participant Web as Frontend React
+  participant API as API Flask
+  participant Progress as Servico de Progresso
+  participant DB as PostgreSQL
+  Aluno->>Web: Marca aula como concluida
+  Web->>API: PUT /api/v1/lessons/{id}/completion
+  API->>Progress: validar usuario, matricula e aula
+  Progress->>DB: confirmar aula pertence ao curso matriculado
+  DB-->>Progress: validacao positiva
+  Progress->>DB: inserir conclusao com chave unica aluno+aula
+  Note over Progress,DB: Repetir a solicitacao nao duplica a conclusao
+  Progress->>DB: contar aulas concluidas e total publicado
+  DB-->>Progress: totais atualizados
+  Progress-->>API: percentual calculado
+  API-->>Web: conclusao confirmada e progresso
+  Web-->>Aluno: mostra percentual atualizado

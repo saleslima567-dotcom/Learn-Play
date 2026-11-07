@@ -1,0 +1,135 @@
+erDiagram
+  USER ||--o{ COURSE : teaches
+  USER ||--o{ ENROLLMENT : makes
+  COURSE ||--o{ SECTION : contains
+  SECTION ||--o{ LESSON : contains
+  COURSE ||--o{ ENROLLMENT : receives
+  ENROLLMENT ||--o{ PAYMENT_ATTEMPT : may_have
+  PAYMENT_ATTEMPT ||--o{ PAYMENT_EVENT : receives
+  USER ||--o{ LESSON_COMPLETION : records
+  LESSON ||--o{ LESSON_COMPLETION : is_completed
+  COURSE ||--o{ ASSESSMENT : offers
+  ASSESSMENT ||--o{ ASSESSMENT_QUESTION : contains
+  ASSESSMENT ||--o{ ASSESSMENT_ATTEMPT : receives
+  ASSESSMENT ||--o{ ASSESSMENT_ANSWER : owns
+  ASSESSMENT_ATTEMPT ||--o{ ASSESSMENT_ANSWER : contains
+  ASSESSMENT_QUESTION ||--o{ ASSESSMENT_ANSWER : answered
+  USER ||--o{ ASSESSMENT_ATTEMPT : submits
+  USER o|--o{ USER_SESSION : owns
+  USER ||--o{ AUDIT_EVENT : performs
+  USER ||--o{ NOTIFICATION_OUTBOX : receives
+  USER {
+    uuid id PK
+    string email UK
+    string role
+    string status
+    string password_hash
+  }
+  COURSE {
+    uuid id PK
+    uuid instructor_id FK
+    string title
+    string status
+    decimal price
+    string currency
+  }
+  SECTION {
+    uuid id PK
+    uuid course_id FK
+    string title
+    int position
+  }
+  LESSON {
+    uuid id PK
+    uuid section_id FK
+    string title
+    string media_key
+    int position
+    string status
+  }
+  ENROLLMENT {
+    uuid id PK
+    uuid student_id FK
+    uuid course_id FK
+    string status
+    datetime created_at
+  }
+  PAYMENT_ATTEMPT {
+    uuid id PK
+    uuid enrollment_id FK
+    string provider_reference UK
+    string status
+    decimal amount
+  }
+  PAYMENT_EVENT {
+    uuid id PK
+    string provider_event_id UK
+    uuid payment_attempt_id FK
+    datetime received_at
+    string status
+    string review_code
+  }
+  LESSON_COMPLETION {
+    uuid id PK
+    uuid student_id FK
+    uuid lesson_id FK
+    datetime completed_at
+  }
+  ASSESSMENT {
+    uuid id PK
+    uuid course_id FK
+    string title
+    decimal passing_score
+    int max_attempts
+  }
+  ASSESSMENT_QUESTION {
+    uuid id PK
+    uuid assessment_id FK
+    string prompt
+    string question_type
+    int position
+    decimal points
+  }
+  ASSESSMENT_ATTEMPT {
+    uuid id PK
+    uuid assessment_id FK
+    uuid student_id FK
+    int attempt_number
+    decimal score
+    datetime submitted_at
+  }
+  ASSESSMENT_ANSWER {
+    uuid id PK
+    uuid assessment_id FK
+    uuid attempt_id FK
+    uuid question_id FK
+    string answer_payload
+    boolean is_correct
+  }
+  USER_SESSION {
+    uuid id PK
+    uuid user_id FK
+    string csrf_token_hash
+    datetime expires_at
+    datetime revoked_at
+  }
+  NOTIFICATION_OUTBOX {
+    uuid id PK
+    string event_key UK
+    uuid recipient_id FK
+    string status
+    int attempts
+  }
+  AUDIT_EVENT {
+    uuid id PK
+    uuid actor_id FK
+    string action
+    datetime occurred_at
+  }
+
+
+
+
+
+
+

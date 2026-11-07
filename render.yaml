@@ -1,0 +1,33 @@
+# Render Blueprint / YAML / Render / LearnPlay web service + managed PostgreSQL
+services:
+  - type: web
+    name: learnplay
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health/ready
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: learnplay-db
+          property: connectionString
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SEED_DEMO
+        value: "true"
+      - key: PAYMENT_WEBHOOK_SECRET
+        generateValue: true
+      - key: DEMO_STUDENT_PASSWORD
+        sync: false
+      - key: DEMO_INSTRUCTOR_PASSWORD
+        sync: false
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+
+databases:
+  - name: learnplay-db
+    databaseName: learnplay
+    user: learnplay
+    plan: free
+    postgresMajorVersion: "17"

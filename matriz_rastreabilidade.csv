@@ -1,0 +1,20 @@
+requisito;descricao;componente;diagrama/artefato;decisao;criterio de validacao
+RF01-RF02;Cadastro autenticacao e perfis;Identidade e acesso;C3 + OpenAPI /auth;ADR-004;Conta autentica e autorizacao verificada no backend
+RF03;Consulta de cursos publicados;Catalogo;C2 + OpenAPI /courses;ADR-003;Visitante ve somente cursos publicados com paginação
+RF04-RF05;Solicitacao de matricula sem duplicidade;Matriculas;Sequencia de matricula + modelo de dominio;ADR-001/002/003;Unicidade aluno-curso mesmo com repeticao
+RF06;Consulta de conteudo por aluno matriculado;Conteudo e Identidade;C3 + modelo de dominio;ADR-002/004;Acesso negado sem matricula ativa
+RF07-RF08;Conclusao idempotente e progresso;Progresso;Sequencia de progresso + modelo de dominio;ADR-001/002;Uma conclusao por aluno-aula e percentual consistente
+RF09;Tentativas e resultados;Avaliacoes;C3 + modelo de dominio;ADR-001;Tentativa vinculada a matricula e aluno
+RF10;Manutencao dos cursos do professor;Catalogo e Identidade;C3 + OpenAPI instructor;ADR-003/004;Professor altera apenas cursos autorizados
+RF11;Operacao administrativa;Administracao;C3 + visao logica;ADR-004;Acoes administrativas exigem perfil e auditoria
+RF12;Notificacoes transacionais;Notificacoes;C3 + NotificationOutbox;ADR-001/002;Falha de e-mail nao desfaz matricula e pode ser retentada
+RF13;Pagamento integrado;Matriculas e adaptador de pagamento;Sequencia de matricula + OpenAPI webhook;ADR-002/003;Webhook assinado, idempotente e estado controlado
+RNF01;Seguranca;Identidade e API;Secao 7 + OpenAPI security;ADR-004;Testes de autorizacao, CSRF e rate limit
+RNF02;Desempenho p95 <= 2s em 1000 sessoes alvo;API, Catalogo e PostgreSQL;Visao fisica + cenario de qualidade;ADR-001/002;Teste de carga pendente
+RNF03;Disponibilidade meta 99.5% mensal;API, PostgreSQL e operacao;Visao fisica + monitoramento;ADR-001/002;Medir disponibilidade apos implantacao
+RNF04;Integridade de matricula pagamento e progresso;Matriculas, Pagamentos e Progresso;Modelo de dominio + sequencias;ADR-002;Constraints, transacoes e idempotencia
+RNF05;Privacidade e minimizacao;Identidade e Admin;Secao 7 + AuditEvent;ADR-004;Revisar dados coletados e direitos do titular
+RNF06;Manutenibilidade por fronteiras;Todos os modulos;Visoes logica e desenvolvimento;ADR-001;Revisao de dependencias e alteracoes isoladas
+RNF07;Escala horizontal de API e midia separada;API e object storage;Visao fisica;ADR-001/002;Instancias sem estado local obrigatorio
+RNF08;Backup e recuperacao;PostgreSQL e operacao;Visao fisica + plano de validacao;ADR-002;Exercicio de restauracao pendente
+RNF09;Responsividade web;Frontend React;C2 + requisitos de interface;ADR-003;Revisao em navegadores desktop e celular pendente

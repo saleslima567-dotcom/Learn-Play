@@ -1,0 +1,34 @@
+flowchart TB
+  browser[Dispositivo do usuario<br/>Navegador HTTPS]
+  subgraph cloud[Ambiente de nuvem — implantacao prevista]
+    edge[DNS e TLS]
+    frontend[Hospedagem do frontend<br/>React]
+    lb[Entrada HTTPS / balanceamento]
+    api1[Instancia API Flask]
+    api2[Instancia API Flask adicional sob demanda]
+    worker[Worker de outbox<br/>processo do mesmo artefato]
+    db[(PostgreSQL gerenciado<br/>HA, backup e rede privada)]
+    object[(Armazenamento de objetos S3<br/>acesso por URL temporaria)]
+    logs[Logs e monitoramento]
+  end
+  payment[Gateway de pagamento externo]
+  email[Provedor de e-mail externo]
+  browser --> edge --> frontend
+  frontend -->|HTTPS REST| lb
+  lb --> api1
+  lb --> api2
+  worker --> db
+  worker --> email
+  worker --> logs
+  api1 --> db
+  api2 --> db
+  api1 --> object
+  api2 --> object
+  api1 --> payment
+  api1 --> logs
+  api2 --> logs
+
+
+
+
+

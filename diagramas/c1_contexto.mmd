@@ -1,0 +1,20 @@
+flowchart LR
+  aluno[Aluno]
+  professor[Professor]
+  admin[Administrador]
+  subgraph learnplay[LearnPlay — Plataforma de Cursos Online]
+    web[Aplicacao Web React]
+    api[API da Plataforma Flask]
+    web -->|HTTPS / REST JSON| api
+  end
+  pg[(PostgreSQL)]
+  s3[(Armazenamento de midia S3)]
+  pay[Gateway de pagamento]
+  mail[Provedor de e-mail]
+  aluno -->|consulta cursos, matricula e estuda| web
+  professor -->|publica cursos e acompanha turmas| web
+  admin -->|administra usuarios e catalogo| web
+  api -->|dados transacionais| pg
+  api -->|URLs controladas e arquivos| s3
+  api -->|cobranca e confirmacao| pay
+  api -->|notificacoes| mail

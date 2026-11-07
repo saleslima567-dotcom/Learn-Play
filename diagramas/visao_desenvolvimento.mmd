@@ -1,0 +1,23 @@
+flowchart TB
+  root[learnplay/]
+  root --> frontend[frontend/]
+  root --> backend[backend/]
+  root --> infra[infra/]
+  root --> docs[docs/]
+  frontend --> src[ src/]
+  src --> pages[pages/ — telas React]
+  src --> components[components/ — elementos reutilizaveis]
+  src --> apiClient[api/ — cliente REST e tipos]
+  backend --> app[app/]
+  backend --> worker[worker.py — dispatcher da outbox]
+  app --> routes[routes/ — endpoints e validacao HTTP]
+  app --> services[services/ — casos de uso]
+  app --> domains[domains/ — regras e entidades]
+  app --> repositories[repositories/ — acesso a dados]
+  app --> adapters[adapters/ — S3, pagamento e e-mail]
+  app --> config[config/ — ambiente e extensoes]
+  infra --> compose[compose.yaml e configuracao de implantacao]
+  docs --> adr[adr/ — decisoes arquiteturais]
+  docs --> diagrams[diagrams/ — fontes Mermaid]
+
+

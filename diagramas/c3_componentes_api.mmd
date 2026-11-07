@@ -1,0 +1,43 @@
+flowchart TB
+  request[Requisicao HTTP autenticada]
+  subgraph presentation[Apresentacao — Flask REST]
+    auth[Rotas de identidade]
+    catalog[Rotas do catalogo]
+    enrollment[Rotas de matricula]
+    lesson[Rotas de aulas e progresso]
+    assessment[Rotas de avaliacoes]
+    admin[Rotas administrativas]
+  end
+  subgraph application[Aplicacao — casos de uso]
+    identitySvc[Servico de identidade]
+    catalogSvc[Servico de catalogo]
+    enrollmentSvc[Servico de matricula]
+    progressSvc[Servico de progresso]
+    assessmentSvc[Servico de avaliacao]
+    notifySvc[Servico de notificacao]
+    worker[Worker dispatcher da outbox]
+  end
+  subgraph domain[Dominio]
+    rules[Regras: autorizacao, matricula unica, conclusao idempotente]
+    entities[Entidades: Usuario, Curso, Aula, Matricula, Progresso, Tentativa]
+  end
+  subgraph adapters[Persistencia e adaptadores]
+    repo[Repositorios PostgreSQL]
+    object[Adaptador S3]
+    pay[Adaptador de pagamento]
+    mail[Adaptador de e-mail]
+  end
+  database[(PostgreSQL)]
+  storage[(S3)]
+  payment[Gateway]
+  email[Provedor de e-mail]
+  request --> presentation --> application --> domain
+  worker --> notifySvc
+  application --> adapters
+  repo --> database
+  object --> storage
+  pay --> payment
+  notifySvc --> mail
+  mail --> email
+
+

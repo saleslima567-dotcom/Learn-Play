@@ -1,0 +1,36 @@
+sequenceDiagram
+  actor Aluno
+  participant Web as Frontend React
+  participant API as API Flask
+  participant Mat as Servico de Matricula
+  participant DB as PostgreSQL
+  participant Pay as Gateway de Pagamento
+  participant Worker as Worker de notificacoes
+  participant Mail as Provedor de E-mail
+  Aluno->>Web: Escolhe curso e solicita matricula
+  Web->>API: POST /api/v1/courses/{id}/enrollments
+  API->>Mat: validar identidade, curso e elegibilidade
+  Mat->>DB: verificar matricula existente e disponibilidade
+  DB-->>Mat: curso disponivel e sem duplicidade
+  alt Curso gratuito
+    Mat->>DB: criar matricula ativa
+    Mat-->>API: matricula ativa
+    API-->>Web: 201 Created
+  else Curso pago
+    Mat->>DB: criar matricula pendente
+    Mat->>Pay: iniciar cobranca com chave idempotente
+    Pay-->>Mat: referencia e checkout
+    Mat-->>API: matricula pendente + checkout
+    API-->>Web: 202 Accepted
+  end
+  opt Curso pago — resultado assincrono
+    Pay->>API: webhook assinado com resultado
+    API->>API: validar assinatura, merchant, valor, moeda e evento
+    API->>DB: registrar evento e atualizar estado em transacao
+    Note over API,DB: provider_event_id unico evita reaplicar evento
+    API->>DB: gravar notificacao na outbox apos estado confirmado
+    Worker->>DB: buscar evento pendente apos commit
+    Worker->>Mail: enviar confirmacao
+    Mail-->>Worker: identificador e estado de envio
+    Worker->>DB: marcar evento processado
+  end

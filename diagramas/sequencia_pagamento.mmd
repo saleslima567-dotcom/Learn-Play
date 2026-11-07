@@ -1,0 +1,36 @@
+sequenceDiagram
+  actor Aluno
+  participant Web as Frontend React
+  participant API as API Flask
+  participant Enrollment as Servico de Matricula
+  participant DB as PostgreSQL
+  participant Gateway as Gateway de Pagamento
+  participant Outbox as Tabela Outbox
+  participant Worker as Worker de notificacoes
+  participant Email as Provedor de E-mail
+  Aluno->>Web: Solicita matricula em curso pago
+  Web->>API: POST enrollment + X-Idempotency-Key
+  API->>Enrollment: validar identidade, curso e elegibilidade
+  Enrollment->>DB: verificar curso, matricula e preco vigente
+  DB-->>Enrollment: curso disponivel e sem duplicidade
+  Enrollment->>DB: salvar PENDING_PAYMENT e tentativa
+  Enrollment->>Gateway: criar checkout com referencia idempotente
+  Gateway-->>Enrollment: referencia e URL de checkout
+  Enrollment-->>API: matricula pendente + URL validada
+  API-->>Web: 202 Accepted
+  Web-->>Aluno: redireciona ao checkout
+  Gateway->>API: webhook assinado com resultado
+  API->>API: verificar assinatura, timestamp e evento
+  API->>DB: inserir evento por provider_event_id unico
+  API->>Enrollment: processar resultado em transacao
+  Enrollment->>DB: PENDING_PAYMENT para ACTIVE ou PAYMENT_FAILED
+  Enrollment->>Outbox: registrar notificacao uma vez
+  API-->>Gateway: 200 OK apos registro duravel
+  Worker->>Outbox: buscar evento pendente apos commit
+  Worker->>Email: enviar confirmacao
+  Email-->>Worker: identificador e estado de envio
+  Worker->>Outbox: marcar evento processado
+
+  Note over API,DB: Webhook repetido e reconhecido, sem repetir efeitos
+
+

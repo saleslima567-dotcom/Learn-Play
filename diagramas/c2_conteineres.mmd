@@ -1,0 +1,27 @@
+flowchart LR
+  student[Aluno / Navegador]
+  teacher[Professor / Navegador]
+  administrator[Administrador / Navegador]
+  subgraph learnplay[LearnPlay]
+    frontend[Frontend Web<br/>React + TypeScript]
+    backend[API REST<br/>Python + Flask<br/>Monolito modular em camadas]
+    db[(PostgreSQL<br/>usuarios, cursos, matriculas, progresso)]
+    media[(Object Storage S3<br/>videos e materiais)]
+    worker[Worker de notificacoes<br/>Python — outbox dispatcher]
+  end
+  payment[Gateway de pagamento]
+  email[Servico de e-mail]
+  student -->|HTTPS| frontend
+  teacher -->|HTTPS| frontend
+  administrator -->|HTTPS| frontend
+  frontend -->|JSON /api/v1| backend
+  backend -->|SQLAlchemy / transacoes| db
+  backend -->|adaptador de midia| media
+  backend -->|adaptador de pagamento| payment
+  backend -->|registra outbox| db
+  worker -->|le e atualiza outbox| db
+  worker -->|adaptador de notificacao| email
+
+
+
+

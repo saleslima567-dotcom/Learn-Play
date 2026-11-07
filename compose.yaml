@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: learnplay
+      POSTGRES_USER: learnplay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-learnplay_local_only}
+    volumes:
+      - learnplay_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U learnplay -d learnplay"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://learnplay:${POSTGRES_PASSWORD:-learnplay_local_only}@db:5432/learnplay
+      COOKIE_SECURE: "false"
+      SEED_DEMO: ${SEED_DEMO:-true}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-local-webhook-secret}
+    ports: ["5000:5000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/v1/health/ready')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    depends_on:
+      db: {condition: service_healthy}
+  worker:
+    build: ./backend
+    command: ["python", "worker.py"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://learnplay:${POSTGRES_PASSWORD:-learnplay_local_only}@db:5432/learnplay
+    depends_on:
+      db: {condition: service_healthy}
+      api: {condition: service_healthy}
+  web:
+    build: ./frontend
+    ports: ["5173:5173"]
+    environment:
+      API_PROXY_TARGET: http://api:5000
+    depends_on:
+      api: {condition: service_healthy}
+volumes:
+  learnplay_pg:
