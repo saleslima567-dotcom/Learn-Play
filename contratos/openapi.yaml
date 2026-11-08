@@ -631,6 +631,21 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Admin]
+      summary: Excluir uma conta de aluno e seus dados vinculados
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Conta do aluno e registros associados removidos }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: A rota permite excluir somente contas com perfil de aluno }
   /integrations/payments/webhook:
     post:
       tags: [Integrations]

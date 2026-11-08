@@ -698,6 +698,28 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
         db.session.commit()
         return jsonify(user=user.public())
 
+    @app.delete('/api/v1/admin/users/<user_id>')
+    @require_user('admin')
+    def admin_delete_student(user_id):
+        user = db.session.get(User, user_id)
+        if not user:
+            return problem(404, 'Usuário não encontrado')
+        if user.role != 'student':
+            return problem(409, 'Somente contas de alunos podem ser excluídas por esta ação')
+
+        enrollment_ids = db.session.query(Enrollment.id).filter_by(student_id=user.id).subquery()
+        PaymentEvent.query.filter(PaymentEvent.enrollment_id.in_(enrollment_ids)).delete(synchronize_session=False)
+        AssessmentAttempt.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        CourseResume.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        LessonCompletion.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        Favorite.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        NotificationOutbox.query.filter_by(recipient_id=user.id).delete(synchronize_session=False)
+        ServerSession.query.filter_by(user_id=user.id).delete(synchronize_session=False)
+        Enrollment.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        db.session.delete(user)
+        db.session.commit()
+        return '', 204
+
     @app.get('/api/v1/admin/users')
     @require_user('admin')
     def admin_users():
