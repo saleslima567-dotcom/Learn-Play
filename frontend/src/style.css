@@ -255,7 +255,8 @@ header .brand{white-space:nowrap;font-size:clamp(14px,1.55vw,20px)}
 /* Favoritos e gestão de contas */
 .favorite-toggle.active{color:#d94f70!important}
 .admin-tools{display:flex;align-items:center;gap:12px;margin:10px 0 14px}
-.admin-tools .search{width:min(100%,430px);height:40px}
+.admin-tools .search{display:flex;flex:0 1 430px;width:min(100%,430px);height:40px;margin:0}
+.admin-tools .search input{flex:1;min-width:0;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;outline:0;background:transparent;box-shadow:none;color:var(--ink);font:inherit}
 .admin-tools>small{color:var(--muted);font-size:11px;white-space:nowrap}
 .admin-actions{display:flex;align-items:center;gap:8px}
 .admin-actions .status-action{border:1px solid color-mix(in srgb,var(--purple) 24%,transparent);border-radius:7px;background:var(--accent-soft);color:var(--purple);padding:8px 10px;font-size:10px;font-weight:700;transition:transform .18s,background .18s}
