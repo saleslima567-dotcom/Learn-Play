@@ -1,4 +1,4 @@
-# AV2 — Arquitetura da Plataforma descomplica cursos
+# AV2 — Arquitetura da Plataforma LearnPlay
 ## Passo 2 — Documentar toda a estrutura arquitetural
 
 **Disciplina:** Arquitetura de Software  
@@ -11,7 +11,7 @@
 
 ## 1. Objetivo, público e convenções
 
-Este documento consolida a arquitetura da descomplica cursos definida no Passo 1 e especifica as fronteiras entre componentes, contratos, fluxos, dados, implantação e decisões técnicas. Destina-se à equipe que implementará o protótipo e às pessoas que revisarão sua aderência aos requisitos.
+Este documento consolida a arquitetura da LearnPlay definida no Passo 1 e especifica as fronteiras entre componentes, contratos, fluxos, dados, implantação e decisões técnicas. Destina-se à equipe que implementará o protótipo e às pessoas que revisarão sua aderência aos requisitos.
 
 Os diagramas em diagramas/ são fontes Mermaid editáveis. As rotas e os campos neste documento constituem a proposta inicial do contrato REST. A especificação formal em contratos/openapi.yaml é a fonte de verdade para endpoints documentados. A matriz de rastreabilidade está em matriz_rastreabilidade.csv. Decisões importantes estão registradas separadamente em adrs/.
 
@@ -27,7 +27,7 @@ Os diagramas em diagramas/ são fontes Mermaid editáveis. As rotas e os campos 
 
 ## 2. Contexto e limites
 
-A descomplica cursos conecta alunos, professores e administradores a serviços de pagamento, e-mail e armazenamento de mídia. A plataforma controla contas, catálogo, matrículas, autorização de conteúdo e progresso. O gateway de pagamento processa dados financeiros; a plataforma guarda apenas identificadores e estados da transação. Vídeos e arquivos ficam em armazenamento de objetos e são acessados por referências autorizadas.
+A LearnPlay conecta alunos, professores e administradores a serviços de pagamento, e-mail e armazenamento de mídia. A plataforma controla contas, catálogo, matrículas, autorização de conteúdo e progresso. O gateway de pagamento processa dados financeiros; a plataforma guarda apenas identificadores e estados da transação. Vídeos e arquivos ficam em armazenamento de objetos e são acessados por referências autorizadas.
 
 ### 2.1 Limites de responsabilidade
 
