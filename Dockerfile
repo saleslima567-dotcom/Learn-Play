@@ -1,4 +1,4 @@
-# Dockerfile / root / Node 24 + Python 3.12 / Render web service for descomplica cursos
+# Dockerfile / root / Node 24 + Python 3.12 / Render web service for LearnPlay
 FROM node:24-alpine AS frontend-build
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
