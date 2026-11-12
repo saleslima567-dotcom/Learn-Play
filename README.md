@@ -65,11 +65,13 @@ A API usa SQLite local em `backend/learnplay/instance/learnplay.db`; Vite encami
 
 ## Contas demonstrativas
 
-Estas senhas são somente para a execução local. No Render, informe senhas próprias quando o Blueprint solicitar.
+Os perfis de teste usam os e-mails abaixo:
 
-- Aluno: `aluna@learnplay.local` / `Aluno12345!`
-- Professor: `professor@learnplay.local` / `Professor123!`
-- Administrador: `admin@learnplay.local` / `Admin123456!`
+- Aluno: `aluna@learnplay.local`
+- Professor: `professor@learnplay.local`
+- Administrador: `admin@learnplay.local`
+
+No Render, use as senhas definidas nas variáveis `DEMO_STUDENT_PASSWORD`, `DEMO_INSTRUCTOR_PASSWORD` e `DEMO_ADMIN_PASSWORD`. Não coloque senhas reais neste repositório. Na execução local, as credenciais demonstrativas aparecem na tela de login em `localhost`.
 
 ## Verificação
 
