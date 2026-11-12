@@ -1,10 +1,10 @@
 openapi: 3.1.0
 info:
-  title: descomplica cursos API
+  title: LearnPlay API
   version: 1.0.0
   description: Contratos iniciais da plataforma de cursos online — Passo 2 da AV2.
 servers:
-  - url: https://api.descomplicacursos.example/api/v1
+  - url: https://api.learnplay.example/api/v1
     description: URL ilustrativa; substituir pelo host definido na publicação.
 tags:
   - name: Auth
