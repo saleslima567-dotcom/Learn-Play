@@ -6,10 +6,6 @@ Plataforma demonstrativa de cursos online, desenvolvida com base na arquitetura 
 
 O Passo 3 está descrito em `03_Passo_3_Prototipo.md`.
 
-## Demonstração online
-
-Visite o [LearnPlay hospedado no Render](https://learnplay-lzk9.onrender.com) para explorar este mini projeto: navegue pelo catálogo de cursos, veja as páginas de detalhes e experimente os fluxos demonstrativos de conta, matrícula, aulas e progresso. Pagamentos e reprodução de vídeos são apenas demonstrações; não há cobrança real nem conteúdo de vídeo hospedado.
-
 
 - catálogo público com busca, categorias e detalhes;
 - cadastro e login com sessão persistida no servidor, cookie HttpOnly e proteção CSRF;
@@ -21,6 +17,11 @@ Visite o [LearnPlay hospedado no Render](https://learnplay-lzk9.onrender.com) pa
 - gestão administrativa dos perfis;
 - outbox persistente com worker de notificações demonstrativas;
 - health checks e Docker Compose com PostgreSQL.
+
+## Demonstração online
+
+Visite o [LearnPlay hospedado no Render](https://learnplay-lzk9.onrender.com) para explorar este mini projeto: navegue pelo catálogo de cursos, veja as páginas de detalhes e experimente os fluxos demonstrativos de conta, matrícula, aulas e progresso. Pagamentos e reprodução de vídeos são apenas demonstrações; não há cobrança real nem conteúdo de vídeo hospedado.
+
 
 ## Executar com Docker Compose
 
