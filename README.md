@@ -20,7 +20,7 @@ O Passo 3 está descrito em `03_Passo_3_Prototipo.md`.
 ## Executar com Docker Compose
 
 1. Instale Docker Desktop com Compose.
-2. No diretório `Pasta Raiz Do Trabalho`, execute `docker compose up --build`.
+2. Na raiz do repositório — a pasta que contém `compose.yaml` — execute `docker compose up --build`.
 3. Abra `http://localhost:5173`. A API responde em `http://localhost:5000/api/v1/health/ready`.
 4. Para apagar dados e recomeçar: `docker compose down -v`.
 
@@ -80,6 +80,3 @@ Na pasta `backend`, execute `python -m pytest -q`. Na pasta `frontend`, execute 
 O player é demonstrativo; não há mídia hospedada nem URL assinada S3. Pagamento é simulado na interface; não processa cartões. O worker registra notificações no log sem enviar e-mail. As metas de desempenho, disponibilidade e recuperação não foram medidas. O esquema inicial usa `create_all`; produção exige migrações versionadas, segredos protegidos e cookies seguros via HTTPS.
 
 Arquitetura, documentação, ADRs, diagramas Mermaid, contrato OpenAPI, matriz de rastreabilidade e relatório de revisão permanecem nesta pasta.
-
-
-
