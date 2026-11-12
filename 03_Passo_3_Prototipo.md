@@ -1,4 +1,4 @@
-# AV2 — descomplica cursos
+# AV2 — LearnPlay
 ## Passo 3 — Protótipo funcional
 
 **Disciplina:** Arquitetura de Software  
@@ -8,7 +8,7 @@
 
 ## 1. Objetivo
 
-Entregar um protótipo web executável da descomplica cursos que demonstre os fluxos centrais de uma plataforma de cursos online, mantenha as decisões arquiteturais anteriores e permita validar regras no frontend e na API.
+Entregar um protótipo web executável da LearnPlay que demonstre os fluxos centrais de uma plataforma de cursos online, mantenha as decisões arquiteturais anteriores e permita validar regras no frontend e na API.
 
 ## 2. Funcionalidades do protótipo
 
