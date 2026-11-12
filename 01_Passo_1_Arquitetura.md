@@ -1,4 +1,4 @@
-# AV2 — Arquitetura da Plataforma descomplica cursos
+# AV2 — Arquitetura da Plataforma LearnPlay
 ## Passo 1 — Estruturar a arquitetura da aplicação
 
 **Disciplina:** Arquitetura de Software  
@@ -10,7 +10,7 @@
 
 ## 1. Resumo da solução
 
-A descomplica cursos é uma plataforma web de cursos online para alunos, professores e administradores. Alunos podem criar conta, consultar cursos, matricular-se, assistir às aulas, acompanhar o progresso e realizar avaliações. Professores organizam cursos, aulas e avaliações. Administradores gerenciam usuários, catálogo e operação da plataforma.
+A LearnPlay é uma plataforma web de cursos online para alunos, professores e administradores. Alunos podem criar conta, consultar cursos, matricular-se, assistir às aulas, acompanhar o progresso e realizar avaliações. Professores organizam cursos, aulas e avaliações. Administradores gerenciam usuários, catálogo e operação da plataforma.
 
 A solução será construída inicialmente como uma aplicação web com frontend React e uma API em Python/Flask. A API será um monólito modular organizado em camadas, com módulos de domínio separados. PostgreSQL armazenará dados transacionais; armazenamento de objetos compatível com S3 guardará vídeos e materiais. Um gateway de pagamento e um provedor de e-mail poderão ser integrados por contratos definidos.
 
