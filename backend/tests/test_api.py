@@ -1,4 +1,4 @@
-# Python / backend/tests/test_api.py / Python 3.12 + pytest / descomplica cursos API behavior
+# Python / backend/tests/test_api.py / Python 3.12 + pytest / LearnPlay API behavior
 import pytest
 import hashlib
 import hmac
