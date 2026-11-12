@@ -1,4 +1,4 @@
-# Python / backend/learnplay/app.py / Python 3.12 + Flask / descomplica cursos REST API
+# Python / backend/learnplay/app.py / Python 3.12 + Flask / LearnPlay REST API
 from __future__ import annotations
 
 import hashlib
@@ -505,7 +505,7 @@ def create_app(test_config=None):
         issued_on = now_utc().strftime('%d/%m/%Y')
         page = f'''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Certificado descomplica cursos — {course_title}</title>
+<title>Certificado LearnPlay — {course_title}</title>
 <style>
 *{{box-sizing:border-box}}body{{margin:0;padding:32px;background:#f0eef7;color:#242239;font-family:Georgia,"Times New Roman",serif}}
 .sheet{{position:relative;display:flex;min-height:calc(100vh - 64px);align-items:center;justify-content:center;border:12px solid #7455e8;background:#fff;padding:8vw;text-align:center}}
@@ -517,14 +517,14 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
 .print{{position:fixed;right:24px;top:24px;border:0;border-radius:10px;background:#7455e8;color:white;padding:12px 16px;font:700 14px Arial,sans-serif;cursor:pointer}}
 @media print{{@page{{size:A4 landscape;margin:0}}body{{padding:0;background:white}}.sheet{{min-height:100vh;border-width:12px}}.print{{display:none}}}}
 </style></head><body><button class="print" onclick="window.print()">Imprimir / salvar em PDF</button>
-<main class="sheet"><div class="content"><div class="brand">descomplica cursos · aprender abre caminhos</div><h1>Certificado de conclusão</h1>
+<main class="sheet"><div class="content"><div class="brand">LearnPlay · aprender abre caminhos</div><h1>Certificado de conclusão</h1>
 <p class="intro">Certificamos que</p><div class="name">{student_name}</div>
 <p class="intro">concluiu todas as aulas do curso</p><div class="course">{course_title}</div>
 <p class="date">Emitido em {issued_on}</p><p class="id">Identificador do certificado: LP-{certificate_id}</p></div></main></body></html>'''
         response = make_response(page)
         response.headers['Content-Type'] = 'text/html; charset=utf-8'
         response.headers['Cache-Control'] = 'no-store'
-        response.headers['Content-Disposition'] = f'inline; filename="certificado-descomplica-cursos-{certificate_id}.html"'
+        response.headers['Content-Disposition'] = f'inline; filename="certificado-learnplay-{certificate_id}.html"'
         return response
 
     @app.post('/api/v1/courses/<course_id>/assessments/<assessment_id>/attempts')
@@ -770,12 +770,12 @@ def problem(status, detail):
 
 
 def seed_demo_data():
-    """Seed predictable local demo accounts and the descomplica cursos catalog."""
+    """Seed predictable local demo accounts and the LearnPlay catalog."""
     if User.query.first():
         return
     student = User(name='Ana Martins', email='aluna@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_STUDENT_PASSWORD', 'Aluno12345!'), method='scrypt'), role='student')
     teacher = User(name='Rafael Costa', email='professor@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'), method='scrypt'), role='instructor')
-    admin = User(name='Equipe descomplica cursos', email='admin@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_ADMIN_PASSWORD', 'Admin123456!'), method='scrypt'), role='admin')
+    admin = User(name='Equipe LearnPlay', email='admin@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_ADMIN_PASSWORD', 'Admin123456!'), method='scrypt'), role='admin')
     db.session.add_all([student, teacher, admin])
     db.session.flush()
     courses = [
