@@ -1,10 +1,12 @@
 # AV2 — Arquitetura da Plataforma LearnPlay
 ## Passo 2 — Documentar toda a estrutura arquitetural
 
-**Disciplina:** Arquitetura de Software  
-**Equipe:** preencher com os nomes reais dos integrantes (máximo de 4 pessoas)  
-**Data:** 7 de novembro de 2026  
-**Status:** documentação arquitetural preliminar para orientar a implementação do protótipo  
+**Disciplina:** Arquitetura de Software<br>
+**Estudante:** Paulo Kauã<br>
+**Matrícula:** 01855908<br>
+**Data:** 7 de novembro de 2026<br>
+**Revisado:** 14 de novembro de 2026<br>
+**Status:** arquitetura alvo; diferenças em relação ao protótipo estão registradas no Passo 3<br>
 **Documento relacionado:** 01_Passo_1_Arquitetura.md
 
 ---
@@ -27,7 +29,11 @@ Os diagramas em diagramas/ são fontes Mermaid editáveis. As rotas e os campos 
 
 ## 2. Contexto e limites
 
+<<<<<<< HEAD
 A LearnPlay conecta alunos, professores e administradores a serviços de pagamento, e-mail e armazenamento de mídia. A plataforma controla contas, catálogo, matrículas, autorização de conteúdo e progresso. O gateway de pagamento processa dados financeiros; a plataforma guarda apenas identificadores e estados da transação. Vídeos e arquivos ficam em armazenamento de objetos e são acessados por referências autorizadas.
+=======
+A arquitetura alvo prevê conexão com serviços de pagamento, e-mail e armazenamento de mídia. O protótipo atual controla contas, catálogo, matrículas, acesso ao conteúdo e progresso, mas não conecta esses três provedores: a confirmação de pagamento é demonstrativa, o worker registra a notificação sem enviar e-mail, e o player não hospeda vídeo. Essa distinção evita tratar integrações futuras como funcionalidades já disponíveis.
+>>>>>>> 4fe7e88 (Alinhar documentação ao protótipo entregue)
 
 ### 2.1 Limites de responsabilidade
 
@@ -85,7 +91,7 @@ Os módulos compartilham as entidades fundamentais por identificadores e interfa
 Estrutura planejada para repositório único com diretórios separados para frontend, backend, infraestrutura e documentação:
 
 ```text
-learnplay/
+descomplica-cursos/ (estrutura alvo, não representa exatamente as pastas implementadas)
   frontend/
     src/pages/                 telas e rotas da interface
     src/components/            componentes reutilizáveis
@@ -115,9 +121,13 @@ learnplay/
 
 A estrutura de implementação poderá ser adaptada se o protótipo exigir menos arquivos, mantendo as mesmas fronteiras. Regras de domínio ficam testáveis sem inicializar servidor web; rotas convertem HTTP em comandos/consultas e formatam respostas.
 
+No protótipo entregue, a estrutura foi simplificada: a API e seus modelos ficam principalmente em `backend/learnplay/app.py`, e a interface React está em `frontend/src/main.tsx`. Não foram criadas as pastas de domínio e repositórios mostradas acima. Essa foi uma redução de escopo para concluir e publicar a aplicação individualmente; separar os módulos é uma evolução possível, não uma característica que o código atual já tenha.
+
 ### 4.3 Visão de processos
 
-#### Matrícula em curso pago
+#### Matrícula em curso pago — fluxo alvo
+
+Este fluxo descreve a integração prevista. No protótipo, a ativação é simulada pela interface e não há gateway conectado.
 
 1. O aluno autenticado escolhe um curso publicado.
 2. A API valida perfil, publicação, pré-requisitos e ausência de matrícula ativa ou pendente conflitante.
@@ -261,19 +271,23 @@ Exige sessão, CSRF e perfil professor. Cria curso em rascunho ligado ao profess
 
 #### Administrar usuário — PATCH /api/v1/admin/users/{userId}
 
-Exige perfil administrador e CSRF. Pode alterar perfil ou estado; a operação é auditada. Negar alteração de perfil que permita autoelevação pelo mesmo ator.
+Exige perfil administrador e CSRF. Pode alterar perfil ou estado; a regra impede suspender o último administrador ativo. O registro persistente de auditoria está previsto no modelo `AuditEvent`, mas ainda não é gravado pelo protótipo.
+
+#### Excluir aluno — DELETE /api/v1/admin/users/{userId}
+
+Exige perfil administrador e CSRF. A operação só aceita contas com perfil de aluno e remove a conta, suas sessões, matrículas, favoritos, retomadas, conclusões, tentativas de avaliação, notificações e eventos de pagamento demonstrativos associados. É uma exclusão definitiva; perfis de professor e administrador não podem ser removidos por esta rota.
 
 #### Atualizar curso — PATCH /api/v1/instructor/courses/{courseId}
 
 Exige perfil professor e propriedade do curso ou permissão administrativa. Campos alteráveis explicitamente enumerados. Estado publicado só muda após validações mínimas de título, descrição e conteúdo.
 
-A especificação OpenAPI complementar encontra-se em contratos/openapi.yaml e inclui health checks, criação e atualização de cursos, administração de usuários, matrícula, conteúdo, progresso, avaliação e webhook de pagamento.
+A especificação OpenAPI complementar encontra-se em contratos/openapi.yaml e inclui health checks, criação e atualização de cursos, administração e exclusão de alunos, matrícula, conteúdo, progresso, avaliação e webhook de pagamento.
 
-### 6.3 Integração de mídia
+### 6.3 Integração de mídia — proposta, não conectada no protótipo
 
 O banco guarda object_key, tipo, tamanho, duração e estado do arquivo. Upload inicia uma sessão controlada, valida autorização e limite, e usa URL pré-assinada de curta duração. Leitura exige matrícula ativa, depois a API gera URL temporária de leitura. Chaves não podem ser adivinhadas como mecanismo único de autorização. Não enviar vídeo binário por meio da API Flask.
 
-### 6.4 Integração de e-mail
+### 6.4 Integração de e-mail — proposta, não conectada no protótipo
 
 Eventos mínimos: conta criada, matrícula confirmada, redefinição de senha e conclusão de curso. Mensagens são solicitadas por outbox após confirmação transacional. Templates não expõem dados de outros usuários. Falha de e-mail não desfaz matrícula; retentativas são limitadas e observáveis.
 

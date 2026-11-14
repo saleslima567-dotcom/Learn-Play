@@ -6,7 +6,7 @@ RF06;Consulta de conteudo por aluno matriculado;Conteudo e Identidade;C3 + model
 RF07-RF08;Conclusao idempotente e progresso;Progresso;Sequencia de progresso + modelo de dominio;ADR-001/002;Uma conclusao por aluno-aula e percentual consistente
 RF09;Tentativas e resultados;Avaliacoes;C3 + modelo de dominio;ADR-001;Tentativa vinculada a matricula e aluno
 RF10;Manutencao dos cursos do professor;Catalogo e Identidade;C3 + OpenAPI instructor;ADR-003/004;Professor altera apenas cursos autorizados
-RF11;Operacao administrativa;Administracao;C3 + visao logica;ADR-004;Acoes administrativas exigem perfil e auditoria
+RF11;Operacao administrativa;Administracao;C3 + OpenAPI admin;ADR-004;Rotas exigem perfil admin, exclusao definitiva limitada a aluno, auditoria prevista mas nao implementada no prototipo
 RF12;Notificacoes transacionais;Notificacoes;C3 + NotificationOutbox;ADR-001/002;Falha de e-mail nao desfaz matricula e pode ser retentada
 RF13;Pagamento integrado;Matriculas e adaptador de pagamento;Sequencia de matricula + OpenAPI webhook;ADR-002/003;Webhook assinado, idempotente e estado controlado
 RNF01;Seguranca;Identidade e API;Secao 7 + OpenAPI security;ADR-004;Testes de autorizacao, CSRF e rate limit

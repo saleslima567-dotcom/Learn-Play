@@ -1,9 +1,11 @@
 # AV2 — Arquitetura da Plataforma LearnPlay
 ## Passo 1 — Estruturar a arquitetura da aplicação
 
-**Disciplina:** Arquitetura de Software  
-**Equipe:** preencher com os nomes reais dos integrantes (máximo de 4 pessoas)  
-**Data:** 7 de novembro de 2026  
+**Disciplina:** Arquitetura de Software<br>
+**Estudante:** Paulo Kauã<br>
+**Matrícula:** 01855908<br>
+**Data:** 7 de novembro de 2026<br>
+**Revisado:** 14 de novembro de 2026<br>
 **Etapa entregue:** Passo 1 — definição inicial da arquitetura
 
 ---
@@ -13,6 +15,8 @@
 A LearnPlay é uma plataforma web de cursos online para alunos, professores e administradores. Alunos podem criar conta, consultar cursos, matricular-se, assistir às aulas, acompanhar o progresso e realizar avaliações. Professores organizam cursos, aulas e avaliações. Administradores gerenciam usuários, catálogo e operação da plataforma.
 
 A solução será construída inicialmente como uma aplicação web com frontend React e uma API em Python/Flask. A API será um monólito modular organizado em camadas, com módulos de domínio separados. PostgreSQL armazenará dados transacionais; armazenamento de objetos compatível com S3 guardará vídeos e materiais. Um gateway de pagamento e um provedor de e-mail poderão ser integrados por contratos definidos.
+
+Para esta entrega individual, a escolha prática foi manter a interface e a API no mesmo serviço web do Render e usar PostgreSQL gerenciado para persistência. Isso simplifica a publicação do protótipo e evita configurar CORS entre serviços separados. Armazenamento S3, cobrança real e envio de e-mail permanecem como integrações previstas, sem conexão ativa no protótipo.
 
 A escolha favorece uma primeira versão compreensível e implantável por uma equipe pequena. A separação modular permite evoluir partes específicas caso o volume e os requisitos futuros justifiquem mudanças. A API HTTP e o worker da outbox podem executar como processos do mesmo artefato backend; o worker não cria um serviço de domínio independente. A arquitetura não assume microsserviços desde o início.
 
@@ -85,7 +89,7 @@ Os valores acima são metas arquiteturais para orientar o projeto; não represen
 
 ### 4.2 Justificativa
 
-A equipe precisa entregar uma solução inicial com fronteiras claras, documentação compreensível e custo operacional moderado. Um backend único simplifica implantação, transações e depuração. Os módulos de identidade, catálogo, matrícula, conteúdo, progresso, avaliação e notificações mantêm coesão e reduzem dependências cruzadas. Separar interface e API permite evolução independente do cliente web sem introduzir a operação distribuída de microsserviços.
+O escopo da AV2 pede uma aplicação que seja possível publicar e demonstrar individualmente. Um backend único reduz o número de serviços para configurar e facilita acompanhar erros de implantação. React mantém a interface separada da API Flask, enquanto PostgreSQL atende à persistência exigida. A divisão em módulos é a direção arquitetural; o Passo 3 registra onde o protótipo simplificou essa organização.
 
 A arquitetura poderá ser ampliada com cache, filas e serviços separados se métricas demonstrarem gargalos ou se equipes independentes precisarem de ciclos de implantação próprios. A adoção dessas peças será uma decisão futura baseada em requisitos e evidências.
 
@@ -99,7 +103,11 @@ A arquitetura poderá ser ampliada com cache, filas e serviços separados se mé
 - Implantação prevista para protótipo: frontend e API em serviços web; PostgreSQL gerenciado ou contêiner local. Configuração e credenciais por ambiente.
 - Autenticação: sessão/token seguro com autorização por perfil; segredos nunca incluídos no repositório.
 
-## 5. Visão geral da solução
+Este é o desenho alvo, não uma afirmação de que todos esses componentes estão ativos. No protótipo do Passo 3, a interface e a API são servidas no mesmo serviço do Render e usam PostgreSQL gerenciado; S3, pagamento real, e-mail externo e trilha de auditoria não foram conectados.
+
+## 5. Fluxo previsto na arquitetura
+
+O fluxo abaixo representa o desenho alvo. A implementação reduzida do protótipo está descrita no Passo 3.
 
 1. O navegador carrega a aplicação React.
 2. O React envia requisições REST à API Flask.
@@ -148,7 +156,8 @@ Regra de dependência: apresentação chama aplicação; aplicação usa domíni
 | GET /api/v1/me/progress/{courseId} | Aluno | Consultar progresso. |
 | POST /api/v1/courses/{courseId}/assessments/{assessmentId}/attempts | Aluno matriculado | Enviar tentativa de avaliação. |
 | POST /api/v1/instructor/courses; PATCH /api/v1/instructor/courses/{courseId} | Professor | Criar ou atualizar curso sob sua responsabilidade. |
-| PATCH /api/v1/admin/users/{userId} | Administrador | Alterar estado ou perfil de conta, com auditoria. |
+| PATCH /api/v1/admin/users/{userId} | Administrador | Alterar estado ou perfil de conta. |
+| DELETE /api/v1/admin/users/{userId} | Administrador | Excluir uma conta de aluno e seus registros associados. |
 | GET /api/v1/health/live; GET /api/v1/health/ready | Público | Verificar estado do processo e prontidão. |
 | POST /api/v1/integrations/payments/webhook | Gateway de pagamento | Receber confirmação assinada e idempotente. |
 

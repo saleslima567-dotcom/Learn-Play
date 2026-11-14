@@ -623,7 +623,7 @@ paths:
                 status: { type: string, enum: [active, suspended] }
       responses:
         '200':
-          description: Usuario atualizado; acao registrada em auditoria
+          description: Usuario atualizado
           content:
             application/json:
               schema: { $ref: '#/components/schemas/User' }

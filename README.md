@@ -14,7 +14,8 @@ O Passo 3 está descrito em `03_Passo_3_Prototipo.md`.
 - conteúdo protegido por matrícula ativa, conclusão idempotente e cálculo de progresso;
 - avaliação corrigida no servidor, nota e limite de tentativas;
 - criação de cursos e aulas, publicação de aulas/cursos e configuração de avaliação pelo professor;
-- gestão administrativa dos perfis;
+- painel administrativo para buscar usuários, alterar perfis, suspender/reativar acesso e excluir definitivamente contas de aluno com seus registros relacionados;
+- cursos favoritos e retomada da última aula acessada;
 - outbox persistente com worker de notificações demonstrativas;
 - health checks e Docker Compose com PostgreSQL.
 
@@ -32,6 +33,8 @@ Visite o [LearnPlay hospedado no Render](https://learnplay-lzk9.onrender.com) pa
 
 O Compose usa valores locais de exemplo. Altere-os antes de qualquer ambiente compartilhado.
 
+No código, alguns identificadores internos ainda usam `learnplay` (por exemplo, a pasta `backend/learnplay`, o cookie de sessão e os e-mails de demonstração `@learnplay.local`). Eles não são o nome exibido no site; a marca da interface é `descomplica cursos`.
+
 ## Publicar no Render
 
 O repositório inclui `render.yaml` (Blueprint) e o Dockerfile da raiz. O container compila o frontend React/Vite para produção e o Flask serve os arquivos e a API no mesmo domínio. O Blueprint cria o serviço web e um PostgreSQL gerenciado.
@@ -39,7 +42,11 @@ O repositório inclui `render.yaml` (Blueprint) e o Dockerfile da raiz. O contai
 1. Envie a pasta do trabalho para um repositório GitHub. Não envie `.env` nem credenciais.
 2. No Render, crie um Blueprint e conecte esse repositório. O Render lê `render.yaml` e mostra os serviços antes de criá-los.
 3. Quando solicitado, informe três senhas fortes diferentes para as contas de demonstração (aluna, professor e administrador). Guarde-as; o Render não as exibe novamente no assistente.
+<<<<<<< HEAD
 4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL exibida pelo Render para o serviço criado.
+=======
+4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL `onrender.com` exibida na página do serviço web; o endereço pode manter um identificador antigo mesmo depois da troca do nome visual.
+>>>>>>> 4fe7e88 (Alinhar documentação ao protótipo entregue)
 
 O plano gratuito do PostgreSQL expira após 30 dias e os serviços web gratuitos podem dormir quando ficam sem tráfego. Para manter o banco e os dados por mais tempo, escolha um plano PostgreSQL pago antes da expiração. Consulte [limitações dos planos gratuitos do Render](https://render.com/docs/free).
 

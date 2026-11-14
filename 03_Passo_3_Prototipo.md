@@ -1,9 +1,12 @@
 # AV2 — LearnPlay
 ## Passo 3 — Protótipo funcional
 
-**Disciplina:** Arquitetura de Software  
-**Tecnologias:** React 19, TypeScript, Vite 8, Python 3.12, Flask, SQLAlchemy e PostgreSQL  
-**Data:** 7 de novembro de 2026  
+**Disciplina:** Arquitetura de Software<br>
+**Tecnologias:** React 19, TypeScript, Vite 8, Python 3.12, Flask, SQLAlchemy e PostgreSQL<br>
+**Estudante:** Paulo Kauã<br>
+**Matrícula:** 01855908<br>
+**Início:** 7 de novembro de 2026<br>
+**Atualização documental:** 14 de novembro de 2026<br>
 **Base:** requisitos e decisões dos documentos dos Passos 1 e 2 nesta pasta.
 
 ## 1. Objetivo
@@ -19,7 +22,7 @@ Entregar um protótipo web executável da LearnPlay que demonstre os fluxos cent
 - aulas protegidas por matrícula ativa e conclusão idempotente com cálculo de progresso;
 - avaliação com alternativas, correção no backend, nota e limite de tentativas;
 - painel do professor para criar curso, acrescentar aula publicada, definir avaliação e publicar após existir aula publicada;
-- painel administrativo com busca de contas, alteração de perfil e suspensão/reativação de acesso;
+- painel administrativo com busca de contas, alteração de perfil, suspensão/reativação e exclusão definitiva de contas de aluno;
 - favoritos persistidos por aluno e atalho de navegação para a lista pessoal;
 - salvamento da última aula acessada por curso para retomar o estudo;
 - páginas Sobre e Ajuda com explicação dos fluxos reais e demonstrativos;
@@ -43,6 +46,8 @@ compose.yaml             PostgreSQL, API, worker e frontend local
 contratos/openapi.yaml   contrato HTTP atualizado para as rotas implementadas
 ```
 
+Essa organização é a estrutura efetivamente entregue. Em relação ao desenho modular dos Passos 1 e 2, a implementação concentra API, modelos e regras em `app.py` e a interface em `main.tsx`; a separação em pacotes de domínio, repositórios e componentes ainda não foi feita. Os nomes internos `learnplay` que aparecem no caminho do backend e no cookie de sessão são identificadores legados; o nome apresentado na interface é `descomplica cursos`.
+
 ## 4. Critérios de aceitação e evidências
 
 | Critério | Evidência |
@@ -57,9 +62,10 @@ contratos/openapi.yaml   contrato HTTP atualizado para as rotas implementadas
 | Tentativa é corrigida no servidor e bloqueada após o limite | `test_assessment_attempts_are_limited_and_score_is_computed`. |
 | Webhook exige HMAC e evento repetido não duplica efeitos | `test_payment_webhook_signature_and_duplicate_event_are_idempotent`. |
 | Certificado só é emitido após conclusão integral | `GET /api/v1/me/certificates/{courseId}` verifica matrícula e progresso. |
+| Administrador pode excluir apenas uma conta de aluno | `DELETE /api/v1/admin/users/{userId}` apaga também os registros associados; a interface pede confirmação. |
 | A ajuda explica os limites das integrações | Páginas Sobre e Ajuda descrevem pagamentos e player demonstrativos. |
 
-**Resultado da validação desta entrega:** 8 testes automatizados passaram; o frontend TypeScript foi compilado e o bundle de produção do Vite foi gerado com sucesso. A API foi inicializada com SQLite e a rota pública de catálogo foi consultada. O Compose/PostgreSQL não foi iniciado nessa validação. A primeira implantação no Render encontrou uma corrida na criação do esquema; `init_db.py` agora executa uma única inicialização serializada antes do Gunicorn. O novo container ainda precisa ser publicado para validar a correção no Render.
+**Registro de validação anterior, em 7 de novembro:** oito testes automatizados passaram; o frontend foi compilado e a API local iniciou com SQLite. O Compose/PostgreSQL não foi iniciado naquela rodada. Esse resultado não cobre as mudanças adicionadas depois, incluindo favoritos, retomada de aula, renovação automática do token CSRF e exclusão de alunos; elas precisam de uma nova rodada de validação antes de serem tratadas como verificadas.
 
 ## 5. Execução
 
@@ -76,3 +82,11 @@ As instruções de execução com Docker Compose e sem Docker, incluindo contas 
 ## 7. Rastreabilidade arquitetural
 
 Os módulos e fluxos mantêm as responsabilidades dos documentos anteriores: identidade e acesso, catálogo, matrículas, conteúdo, progresso, avaliações, notificações e administração. A especificação OpenAPI e a matriz de rastreabilidade ficam nos arquivos existentes desta pasta; este documento registra o que foi implementado e o que permanece demonstrativo.
+
+## 8. Histórico de implementação e publicação
+
+- Na primeira publicação no Render, a criação simultânea das tabelas por mais de um worker causou conflito no PostgreSQL. Foi adicionada a inicialização serializada em `backend/init_db.py` antes da subida do Gunicorn; depois disso, o serviço foi publicado e a página abriu no Render.
+- Durante o uso do login apareceu “Token CSRF ausente ou inválido” quando o token em memória ficou diferente da sessão do navegador. O cliente agora renova o token e repete a operação uma vez quando a resposta identifica esse erro.
+- A publicação é feita pelo GitHub e Render a partir do repositório. O nome visual do site foi alterado, embora o endereço `onrender.com` possa continuar contendo o identificador antigo do serviço.
+
+Esses registros descrevem problemas observados durante a implantação; não substituem uma nova execução dos testes automatizados nem uma conferência do banco PostgreSQL hospedado.

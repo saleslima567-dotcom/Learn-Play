@@ -4,6 +4,8 @@
 **Escopo:** todos os artefatos produzidos nos Passos 1 e 2.  
 **Resultado:** documentação e especificações aprovadas nas verificações executadas, com correções aplicadas durante a revisão.
 
+**Nota de atualização — 14 de novembro de 2026:** este relatório registra a validação original, não uma revalidação da versão atual do protótipo. Depois daquela revisão, o contrato OpenAPI recebeu a operação de exclusão de alunos e a implementação recebeu outras mudanças. A contagem de operações e os resultados abaixo são históricos; a especificação atual precisa ser validada novamente antes de afirmar que continua aprovada.
+
 ## 1. Arquivos revisados
 
 - 01_Passo_1_Arquitetura.md e 02_Passo_2_Documentacao.md.
@@ -41,7 +43,7 @@
 - **Não existe ainda código executável da plataforma** nos Passos 1 e 2. Portanto, não foi possível validar login, matrícula, pagamento, progresso, avaliação, persistência, migrações, implantação ou funcionamento em navegador. Esses comportamentos dependem do protótipo do Passo 3.
 - As metas de até 1.000 sessões simultâneas, latência, disponibilidade, backup e recuperação são requisitos de projeto, não resultados medidos.
 - As fontes Mermaid foram revisadas estruturalmente, mas não foram renderizadas: não há renderizador Mermaid instalado neste ambiente. A apresentação visual dos diagramas permanece sem verificação visual.
-- Os nomes dos integrantes continuam como campo para preencher com os dados reais da equipe.
+- Na revisão original, os nomes dos integrantes estavam pendentes. Os documentos atuais dos Passos 1 a 3 foram atualizados com o nome e a matrícula informados pelo estudante.
 
 ## 5. Conclusão
 
