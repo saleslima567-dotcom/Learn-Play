@@ -232,6 +232,8 @@ footer{font-size:12px;padding:22px 20px 26px}
 .footer-links button{padding:6px 0;border:0;background:none;color:var(--muted);font-size:11px;transition:color .18s,transform .18s}
 .footer-links button:hover{color:var(--purple);transform:translateY(-1px)}
 .info-page{max-width:1080px;min-height:65vh;padding-top:46px}
+.info-page>.back{display:table;margin:0 0 22px}
+.info-page>.eyebrow{display:flex}
 .info-page>h1{max-width:760px;margin:14px 0;font:800 42px/1.12 Manrope;letter-spacing:-2px;color:var(--ink)}
 .info-page>h1 em{font-style:normal;color:var(--purple)}
 .info-page>p{max-width:650px;color:var(--muted);font-size:14px;line-height:1.75}
