@@ -1,6 +1,6 @@
 // TypeScript / frontend/src/main.tsx / React 19 + Vite 8 / LearnPlay web client
-import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import{ArrowLeft,ArrowRight,BookOpen,Clock3,GraduationCap,Heart,LogOut,Moon,Play,Search,ShieldCheck,Sparkles,Star,Sun,Users,X}from'lucide-react';import { Detail, Favorites, InfoPage, Mine } from './components/CatalogPages';
-import type { U, L, Q, A, C, E } from './model';
+import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import{ArrowRight,BookOpen,Clock3,GraduationCap,Heart,LogOut,Moon,Play,Search,ShieldCheck,Sparkles,Star,Sun,Users,X}from'lucide-react';import { Detail, Favorites, InfoPage, Mine } from './components/CatalogPages';
+import type { U, L, A, C, E } from './model';
 import { glyph, money } from './presentation';
 import'./style.css';
 let csrf='';
