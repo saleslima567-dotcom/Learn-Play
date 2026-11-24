@@ -65,3 +65,31 @@
     transform: none !important;
   }
 }
+
+/* Motion now owns route transitions; avoid competing CSS keyframes. */
+.page-transition { animation: none; }
+
+/* Sonner follows the existing wine/graphite theme tokens. */
+[data-sonner-toaster] {
+  --normal-bg: var(--surface-raised);
+  --normal-text: var(--ink);
+  --normal-border: var(--line);
+  --success-bg: var(--surface-raised);
+  --success-text: var(--ink);
+  --success-border: var(--line);
+  --error-bg: var(--surface-raised);
+  --error-text: var(--ink);
+  --error-border: var(--line);
+}
+[data-sonner-toast].learnplay-toast {
+  background: var(--surface-raised);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--purple);
+  border-radius: 12px;
+  box-shadow: var(--shadow-hover);
+  font-family: 'DM Sans', sans-serif;
+}
+@media (max-width: 620px) {
+  [data-sonner-toaster] { max-width: calc(100vw - 24px); }
+}
