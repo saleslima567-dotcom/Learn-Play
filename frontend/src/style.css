@@ -268,3 +268,66 @@ header .brand{white-space:nowrap;font-size:clamp(14px,1.55vw,20px)}
 .admin-actions .status-action:disabled,.admin-actions select:disabled{opacity:.55;cursor:not-allowed}
 .adminrow{gap:12px}
 @media(max-width:620px){.admin-tools{align-items:stretch;flex-direction:column}.admin-tools .search{width:100%}.adminrow{align-items:flex-start;flex-direction:column}.admin-actions{width:100%;justify-content:space-between}.admin-actions select{max-width:58%}}
+
+
+/* LearnPlay Design System — etapa 1: microinterações leves e acessibilidade.
+   Referências: Taste Skill (hierarquia), Transitions.dev (estados), React Bits (movimento).
+   Somente CSS: sem dependências adicionais e sem alteração de fluxos React. */
+:root {
+  --lp-motion-fast: 160ms;
+  --lp-motion-normal: 240ms;
+  --lp-motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --lp-focus-ring: 0 0 0 3px color-mix(in srgb, var(--purple) 28%, transparent);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
+.card,
+.info-card {
+  transition:
+    transform var(--lp-motion-normal) var(--lp-motion-ease),
+    border-color var(--lp-motion-normal) ease,
+    box-shadow var(--lp-motion-normal) ease;
+}
+.card:hover,
+.card:focus-within {
+  border-color: color-mix(in srgb, var(--purple) 32%, var(--line));
+  box-shadow: var(--shadow-hover);
+}
+.card:focus-within {
+  transform: translateY(-2px);
+}
+.primary,
+.tabs button,
+.cardfoot button,
+.favorite-toggle {
+  transition:
+    transform var(--lp-motion-fast) var(--lp-motion-ease),
+    background-color var(--lp-motion-fast) ease,
+    box-shadow var(--lp-motion-fast) ease,
+    color var(--lp-motion-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .primary:not(:disabled):hover { transform: translateY(-2px); }
+  .cardfoot button:not(:disabled):hover,
+  .favorite-toggle:not(:disabled):hover { transform: translateY(-2px) scale(1.05); }
+}
+.primary:not(:disabled):active,
+.cardfoot button:not(:disabled):active { transform: translateY(0) scale(.98); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+  .card:hover, .card:focus-within,
+  .info-card:hover, .primary:hover, .cardfoot button:hover {
+    transform: none !important;
+  }
+}
