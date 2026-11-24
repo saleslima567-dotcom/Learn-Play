@@ -507,3 +507,31 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .85; }
   }
   .heroart .float small { font-size: 10px; }
 }
+
+/* Center card action icons independently of inherited button padding. */
+.cardfoot > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+.cardfoot > button > svg {
+  display: block;
+  flex-shrink: 0;
+  margin: 0;
+}
+.cardfoot > .favorite-toggle > svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+}
+.cardfoot > .favorite-toggle.active {
+  background: var(--accent-soft);
+  color: #d94f70;
+}
+.cardfoot > button:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
