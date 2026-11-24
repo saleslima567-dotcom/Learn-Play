@@ -1,0 +1,39 @@
+name: Prepare LearnPlay UI stack
+
+on:
+  push:
+    branches:
+      - feature/learnplay-ui-data-dashboard
+    paths:
+      - .github/workflows/prepare-ui-stack.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install libraries and shadcn components
+        working-directory: frontend
+        run: |
+          npm install @tanstack/react-query react-hook-form zod @hookform/resolvers embla-carousel-react recharts tailwindcss @tailwindcss/vite
+          npm install -D @types/node
+          npx --yes shadcn@latest init --yes --base radix
+          npx --yes shadcn@latest add button badge --yes
+          npm run build
+      - name: Commit generated shadcn components and lockfile
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend
+          git diff --cached --quiet || (git commit -m "build: configure shadcn and lock LearnPlay UI dependencies" && git push origin HEAD:feature/learnplay-ui-data-dashboard)
