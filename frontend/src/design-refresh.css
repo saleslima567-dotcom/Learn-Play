@@ -1,34 +1,36 @@
 /* LearnPlay · Visual direction 03
    Editorial learning interface: readable hierarchy, deliberate spacing,
-   confident ink / blue accent and restrained interaction.
+   deep wine / graphite identity and restrained interaction.
    Inspired by Taste Skill's inventory → design → inspect approach.
    Imported after the original stylesheet for isolated rollback. */
 
 :root {
-  --page: #f7f8f6;
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --surface-soft: #edf2f8;
-  --ink: #17283d;
-  --muted: #52657c;
-  --purple: #315fce;
-  --line: #dbe4ee;
-  --accent-soft: #e8f0ff;
-  --shadow: 0 12px 30px #193c6a0b;
-  --shadow-hover: 0 22px 42px #193c6a18;
+  color-scheme: dark;
+  --page: #0e0d10;
+  --surface: #1a171c;
+  --surface-raised: #252026;
+  --surface-soft: #291a23;
+  --ink: #f5edf0;
+  --muted: #c0aeb7;
+  --purple: #c45b79;
+  --line: #44303b;
+  --accent-soft: #41202d;
+  --shadow: 0 12px 30px #0005;
+  --shadow-hover: 0 22px 42px #0009;
 }
 :root[data-theme="dark"] {
-  --page: #101923;
-  --surface: #192633;
-  --surface-raised: #223140;
-  --surface-soft: #253647;
-  --ink: #eff6ff;
-  --muted: #bac9d9;
-  --purple: #9ab8ff;
-  --line: #34495d;
-  --accent-soft: #263d59;
-  --shadow: 0 12px 30px #0003;
-  --shadow-hover: 0 22px 42px #0005;
+  color-scheme: dark;
+  --page: #09090b;
+  --surface: #141215;
+  --surface-raised: #1d181d;
+  --surface-soft: #24141c;
+  --ink: #fff4f5;
+  --muted: #c8b6c0;
+  --purple: #e17a99;
+  --line: #3a2732;
+  --accent-soft: #351824;
+  --shadow: 0 12px 30px #0007;
+  --shadow-hover: 0 22px 42px #000b;
 }
 body { background: var(--page); }
 header {
@@ -37,20 +39,20 @@ header {
 }
 .brand { letter-spacing: -.9px; }
 .brand i {
-  background: #315fce;
+  background: #87283f;
   border-radius: 10px;
 }
 nav button { font-size: 13px; font-weight: 600; }
 nav button:hover { color: var(--purple); }
 .primary {
   border-radius: 12px;
-  background: #315fce;
+  background: #87283f;
   color: #fff;
-  box-shadow: 0 7px 18px #315fce24;
+  box-shadow: 0 7px 18px #87283f24;
 }
 .primary:hover {
-  background: #214cbb;
-  box-shadow: 0 12px 24px #315fce33;
+  background: #a13751;
+  box-shadow: 0 12px 24px #87283f33;
 }
 .eyebrow {
   color: var(--purple);
@@ -94,12 +96,12 @@ nav button:hover { color: var(--purple); }
 .heroart { min-width: 0; }
 .bigcard {
   border-color: var(--line);
-  box-shadow: 0 24px 48px #112f5b1c;
+  box-shadow: 0 24px 48px #00000055;
   transform: rotate(-2deg);
 }
-.codebox { background: #e2ecff; }
-.codebox > div { background: #20344e; }
-.codebox pre { background: #20344e; color: #e8f2ff; }
+.codebox { background: #4c2634; }
+.codebox > div { background: #21141b; }
+.codebox pre { background: #21141b; color: #f7dce6; }
 .orbit { border-color: color-mix(in srgb, var(--purple) 25%, transparent); }
 .proof {
   max-width: 1110px;
@@ -158,26 +160,26 @@ nav button:hover { color: var(--purple); }
 }
 .cover { height: 166px; text-shadow: none; }
 .cover.violet, .detailcover.violet, .thumb.violet, .mycover.violet {
-  background: #dce7ff;
-  color: #244caa;
+  background: #502334;
+  color: #ffd3df;
 }
 .cover.orange, .detailcover.orange, .thumb.orange, .mycover.orange {
-  background: #fce5cf;
-  color: #a45424;
+  background: #50302d;
+  color: #ffd4c1;
 }
 .cover.blue, .detailcover.blue, .thumb.blue, .mycover.blue {
-  background: #d8eaf2;
-  color: #226b87;
+  background: #39263b;
+  color: #e2caee;
 }
 .cover.green, .detailcover.green, .thumb.green, .mycover.green {
-  background: #dbefe4;
-  color: #277453;
+  background: #29392f;
+  color: #cce6d4;
 }
 .cover b { text-shadow: none; }
 .cover::before, .cover::after { opacity: .2; border-color: currentColor; }
 .cover small, .cover span {
-  background: #ffffffdf;
-  color: #25364b;
+  background: #211b20f0;
+  color: #fff0f3;
   border-radius: 7px;
   font-size: 10px;
   text-shadow: none;
@@ -202,23 +204,23 @@ nav button:hover { color: var(--purple); }
 }
 .banner {
   max-width: 1110px;
-  background: #1b304b;
+  background: #2a151e;
   border-radius: 17px;
   padding: 28px;
 }
-.banner i { background: #294564; color: #d4e4ff; }
+.banner i { background: #482332; color: #ffd9e5; }
 .banner b { font-size: 17px; }
-.banner small { color: #d2dce7; font-size: 13px; }
-.banner button { border-color: #7592b1; font-size: 13px; }
+.banner small { color: #e5c4d0; font-size: 13px; }
+.banner button { border-color: #b77d91; font-size: 13px; }
 footer { max-width: 1160px; font-size: 12px; }
 .detail h1, .dash h1, .info-page > h1 { letter-spacing: -.04em; }
 :root[data-theme="dark"] .tabs button.sel {
-  background: #b5ccff;
-  border-color: #b5ccff;
-  color: #13243a;
+  background: #e17a99;
+  border-color: #e17a99;
+  color: #190d13;
 }
 :root[data-theme="dark"] .cover small,
-:root[data-theme="dark"] .cover span { color: #25364b; }
+:root[data-theme="dark"] .cover span { color: #fff0f3; }
 @media (max-width: 1140px) {
   .catalog, .proof, .banner { margin-inline: 25px; }
   .hero { padding-inline: 36px; }
@@ -272,3 +274,70 @@ footer { max-width: 1160px; font-size: 12px; }
 @media (prefers-reduced-motion: reduce) {
   .bigcard, .float, .orbit { animation: none !important; }
 }
+
+/* Palette completion: legacy surfaces remain coherent with the wine/graphite theme. */
+html, body, .shell { background: var(--page); color: var(--ink); }
+header, nav.show, .modal, .detail aside, .panel, .learnlayout > aside, .quiz,
+.info-card, .emptybox, .mycard, .syllabus, .syllabus > b,
+.learnlayout aside button, .quiz label, .veil .modal {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+header { background: color-mix(in srgb, var(--surface) 95%, transparent); }
+.brand, .footbrand, .ctitle, .detail h1, .dash h1, .info-page > h1 { color: var(--ink); }
+.searchicon, .icon, .rowactions button, .search { background: var(--surface-raised); color: var(--ink); }
+.icon:hover, .searchicon:hover { background: var(--accent-soft); color: var(--purple); }
+input, select, textarea, .modal input, .panel input, .panel textarea, .panel select {
+  background: var(--surface-raised);
+  color: var(--ink);
+  border-color: var(--line);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: .85; }
+.codebox { color: #fff0f3; border: 1px solid #6f394d; }
+.float { background: var(--surface-raised); color: var(--ink); border-color: var(--line); }
+.float small, .bigcard > small { color: var(--muted); }
+.bigcard { background: var(--surface-raised); color: var(--ink); }
+.hero::before {
+  background: radial-gradient(ellipse at 15% 16%, #582237 0%, transparent 56%),
+              linear-gradient(125deg, #21151d 0%, #151216 72%, #2b151f 100%);
+  border: 1px solid #4b2735;
+}
+.eyebrow, .hero h1 em, .sectiontop h2 em { color: var(--purple); }
+.tabs button.sel {
+  background: #842c47;
+  color: #fff6f7;
+  border-color: #b44c6b;
+}
+:root[data-theme="dark"] .tabs button.sel {
+  background: #a83c5d;
+  color: #fff;
+  border-color: #d16585;
+}
+.cover small, .cover span { color: #f8e8ed; background: #241a22e8; }
+:root[data-theme="dark"] .cover small,
+:root[data-theme="dark"] .cover span { color: #f8e8ed; }
+.cover.violet, .detailcover.violet, .thumb.violet, .mycover.violet {
+  background: linear-gradient(145deg, #4c2034, #7f304c);
+  color: #ffe1eb;
+}
+.cover.orange, .detailcover.orange, .thumb.orange, .mycover.orange {
+  background: linear-gradient(145deg, #422528, #77463d);
+  color: #ffe1d3;
+}
+.cover.blue, .detailcover.blue, .thumb.blue, .mycover.blue {
+  background: linear-gradient(145deg, #352539, #604062);
+  color: #f1dcfb;
+}
+.cover.green, .detailcover.green, .thumb.green, .mycover.green {
+  background: linear-gradient(145deg, #28322e, #405b4c);
+  color: #e0f3e5;
+}
+.card:hover .cover b { color: #fff5f7; }
+.favorite-toggle.active { color: #fc8da9 !important; }
+.banner { background: linear-gradient(115deg, #371924, #21151d 70%); border: 1px solid #623044; }
+.banner i { background: #59283b; color: #ffe0e9; }
+.banner button { color: #fff0f3; }
+.info-card > span { background: var(--accent-soft); color: var(--purple); }
+.info-card h2, .panel h2 { color: var(--ink); }
+:focus-visible { outline-color: var(--purple); }
