@@ -2,7 +2,7 @@
 import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import{ArrowRight,BookOpen,Clock3,GraduationCap,Heart,LogOut,Moon,Play,Search,ShieldCheck,Sparkles,Star,Sun,Users,X}from'lucide-react';import { Detail, Favorites, InfoPage, Mine } from './components/CatalogPages';
 import type { U, L, A, C, E } from './model';
 import { glyph, money } from './presentation';
-import'./style.css';
+import'./style.css';import'./design-refresh.css';
 let csrf='';
 async function api<T>(path:string,init:RequestInit={},csrfRetry=false):Promise<T>{const h=new Headers(init.headers);if(init.body)h.set('Content-Type','application/json');const mutating=['POST','PUT','PATCH','DELETE'].includes((init.method||'GET').toUpperCase());if(mutating){if(!csrf)csrf=(await api<{csrf_token:string}>('/api/v1/auth/csrf')).csrf_token;h.set('X-CSRF-Token',csrf)}const r=await fetch(path,{...init,headers:h,credentials:'include'});if(r.status===204)return undefined as T;const d=await r.json().catch(()=>({}));if(!r.ok&&r.status===403&&mutating&&!csrfRetry&&/csrf/i.test(d.detail||'')){csrf='';csrf=(await api<{csrf_token:string}>('/api/v1/auth/csrf')).csrf_token;return api<T>(path,init,true)}if(!r.ok)throw Error(d.detail||`Erro ${r.status}`);return d}
 const cats=['Todos','Programação','Design','Tecnologia','Negócios'];
