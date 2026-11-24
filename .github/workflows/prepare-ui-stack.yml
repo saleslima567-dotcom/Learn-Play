@@ -28,8 +28,10 @@ jobs:
         run: |
           npm install @tanstack/react-query react-hook-form zod @hookform/resolvers embla-carousel-react recharts tailwindcss @tailwindcss/vite
           npm install -D @types/node
-          npx --yes shadcn@latest init --yes --base radix
+          npx --yes shadcn@latest init --yes --base radix --preset nova
           npx --yes shadcn@latest add button badge --yes
+          test -f src/components/ui/button.tsx
+          test -f src/components/ui/badge.tsx
           npm run build
       - name: Commit generated shadcn components and lockfile
         run: |
