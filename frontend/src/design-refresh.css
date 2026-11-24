@@ -5,18 +5,18 @@
    Imported after the original stylesheet for isolated rollback. */
 
 :root {
-  color-scheme: dark;
-  --page: #0e0d10;
-  --surface: #1a171c;
-  --surface-raised: #252026;
-  --surface-soft: #291a23;
-  --ink: #f5edf0;
-  --muted: #c0aeb7;
-  --purple: #c45b79;
-  --line: #44303b;
-  --accent-soft: #41202d;
-  --shadow: 0 12px 30px #0005;
-  --shadow-hover: 0 22px 42px #0009;
+  color-scheme: light;
+  --page: #faf6f5;
+  --surface: #ffffff;
+  --surface-raised: #fffdfd;
+  --surface-soft: #f5e9eb;
+  --ink: #24171c;
+  --muted: #65515a;
+  --purple: #87283f;
+  --line: #e7d8dc;
+  --accent-soft: #f7e6eb;
+  --shadow: 0 12px 30px #51233312;
+  --shadow-hover: 0 22px 42px #5123331e;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -341,3 +341,104 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .85; }
 .info-card > span { background: var(--accent-soft); color: var(--purple); }
 .info-card h2, .panel h2 { color: var(--ink); }
 :focus-visible { outline-color: var(--purple); }
+
+/* Contrast pass — the default theme is warm ivory / wine,
+   whereas the moon theme keeps graphite / deep wine.
+   The previous default used color-scheme:dark in both branches. */
+:root:not([data-theme="dark"]) .hero::before {
+  background: radial-gradient(ellipse at 15% 16%, #f2d9df 0%, transparent 58%),
+              linear-gradient(125deg, #fff6f6 0%, #f7eaec 72%, #f0e0e5 100%);
+  border-color: #ead5dd;
+}
+:root:not([data-theme="dark"]) .bigcard,
+:root:not([data-theme="dark"]) .float {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+:root:not([data-theme="dark"]) .codebox {
+  background: #f4dfe6;
+  border-color: #eacbd5;
+}
+:root:not([data-theme="dark"]) .codebox > div,
+:root:not([data-theme="dark"]) .codebox pre {
+  background: #3a202a;
+  color: #fff5f7;
+}
+:root:not([data-theme="dark"]) .tabs button.sel {
+  background: #87283f;
+  color: #fff;
+  border-color: #87283f;
+}
+:root:not([data-theme="dark"]) .cover.violet,
+:root:not([data-theme="dark"]) .detailcover.violet,
+:root:not([data-theme="dark"]) .thumb.violet,
+:root:not([data-theme="dark"]) .mycover.violet {
+  background: #f4dbe3;
+  color: #7c2946;
+}
+:root:not([data-theme="dark"]) .cover.orange,
+:root:not([data-theme="dark"]) .detailcover.orange,
+:root:not([data-theme="dark"]) .thumb.orange,
+:root:not([data-theme="dark"]) .mycover.orange {
+  background: #f8e0d9;
+  color: #8a493c;
+}
+:root:not([data-theme="dark"]) .cover.blue,
+:root:not([data-theme="dark"]) .detailcover.blue,
+:root:not([data-theme="dark"]) .thumb.blue,
+:root:not([data-theme="dark"]) .mycover.blue {
+  background: #eae1ef;
+  color: #68466f;
+}
+:root:not([data-theme="dark"]) .cover.green,
+:root:not([data-theme="dark"]) .detailcover.green,
+:root:not([data-theme="dark"]) .thumb.green,
+:root:not([data-theme="dark"]) .mycover.green {
+  background: #e4eee8;
+  color: #375e4b;
+}
+:root:not([data-theme="dark"]) .cover small,
+:root:not([data-theme="dark"]) .cover span {
+  background: #ffffffeb;
+  color: #41242e;
+}
+:root:not([data-theme="dark"]) .info-card,
+:root:not([data-theme="dark"]) .emptybox,
+:root:not([data-theme="dark"]) .modal,
+:root:not([data-theme="dark"]) .panel,
+:root:not([data-theme="dark"]) .learnlayout aside button,
+:root:not([data-theme="dark"]) .quiz label {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root:not([data-theme="dark"]) .searchicon,
+:root:not([data-theme="dark"]) .icon {
+  background: #f7e9ed;
+  color: #87283f;
+}
+:root:not([data-theme="dark"]) .banner {
+  background: linear-gradient(115deg, #5c2035, #331922 75%);
+}
+:root:not([data-theme="dark"]) .banner,
+:root:not([data-theme="dark"]) .banner small,
+:root:not([data-theme="dark"]) .banner button {
+  color: #fff3f6;
+}
+.theme-toggle {
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--purple);
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.theme-toggle:hover {
+  background: color-mix(in srgb, var(--purple) 20%, var(--surface));
+  border-color: var(--purple);
+}
+:root[data-theme="dark"] .theme-toggle {
+  background: #3a1d2a;
+  color: #ffd7e4;
+  border-color: #784359;
+}
