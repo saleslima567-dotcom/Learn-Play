@@ -507,3 +507,67 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .85; }
   }
   .heroart .float small { font-size: 10px; }
 }
+
+/* Compact card actions: price stays left, favorite & details align on the right.
+   Explicit button geometry avoids inherited padding and off-center SVGs. */
+.cardfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cardfoot > b {
+  margin-right: auto;
+  white-space: nowrap;
+}
+.cardfoot .card-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: none;
+  gap: 8px;
+}
+.cardfoot .card-actions > button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid color-mix(in srgb, var(--purple) 15%, var(--line));
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--purple);
+  cursor: pointer;
+}
+.cardfoot .card-actions > button > svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  flex: none;
+}
+.cardfoot .card-actions > .favorite-toggle svg { stroke-width: 1.9; }
+.cardfoot .card-actions > .favorite-toggle.active {
+  color: #d94f70;
+  background: color-mix(in srgb, #d94f70 13%, var(--surface));
+  border-color: color-mix(in srgb, #d94f70 27%, var(--line));
+}
+.cardfoot .card-actions > button:hover {
+  background: color-mix(in srgb, var(--purple) 17%, var(--surface));
+  transform: translateY(-2px);
+}
+.cardfoot .card-actions > button:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
+@media (max-width:620px) {
+  .cardfoot { gap: 6px; }
+  .cardfoot .card-actions { gap: 5px; }
+  .cardfoot .card-actions > button { width: 31px; height: 31px; border-radius: 8px; }
+  .cardfoot .card-actions > button > svg { width: 16px; height: 16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cardfoot .card-actions > button:hover { transform: none; }
+}
