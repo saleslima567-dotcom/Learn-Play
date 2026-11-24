@@ -130,3 +130,19 @@
     @apply font-sans;
     }
 }
+/* LearnPlay wine colors for official shadcn/ui components.
+   Keep the existing design-refresh.css in charge of overall page surfaces. */
+:root {
+  --primary: #87283f;
+  --primary-foreground: #ffffff;
+  --secondary: #f7e6eb;
+  --secondary-foreground: #87283f;
+  --ring: #ac5470;
+}
+:root.dark {
+  --primary: #d97798;
+  --primary-foreground: #1c1015;
+  --secondary: #41202d;
+  --secondary-foreground: #ffe6ee;
+  --ring: #d97798;
+}
