@@ -1,97 +1,231 @@
-# Trabalho Da Faculdade — LearnPlay
+<div align="center">
 
-Plataforma demonstrativa de cursos online, desenvolvida com base na arquitetura dos Passos 1 e 2. O código do Passo 3 está em `frontend/`, `backend/` e `compose.yaml`.
+# LearnPlay
 
-## O que funciona no protótipo
+**Aprender abre caminhos.**
 
-O Passo 3 está descrito em `03_Passo_3_Prototipo.md`.
+Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso.
 
+[![LearnPlay Quality](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml/badge.svg)](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml)
+![Status](https://img.shields.io/badge/status-prot%C3%B3tipo%20acad%C3%AAmico-87283f?style=flat)
+![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-87283f?style=flat)
+![Backend](https://img.shields.io/badge/backend-Flask-222222?style=flat)
 
-- catálogo público com busca, categorias e detalhes;
-- cadastro e login com sessão persistida no servidor, cookie HttpOnly e proteção CSRF;
-- perfis de aluno, professor e administrador;
-- matrícula gratuita e matrícula paga pendente com confirmação demonstrativa;
-- conteúdo protegido por matrícula ativa, conclusão idempotente e cálculo de progresso;
-- avaliação corrigida no servidor, nota e limite de tentativas;
-- criação de cursos e aulas, publicação de aulas/cursos e configuração de avaliação pelo professor;
-- painel administrativo para buscar usuários, alterar perfis, suspender/reativar acesso e excluir definitivamente contas de aluno com seus registros relacionados;
-- cursos favoritos e retomada da última aula acessada;
-- outbox persistente com worker de notificações demonstrativas;
-- health checks e Docker Compose com PostgreSQL.
+**[Acessar demonstração](https://learnplay-lzk9.onrender.com/)** · **[Arquitetura](./01_Passo_1_Arquitetura.md)** · **[Contrato da API](./contratos/openapi.yaml)**
 
-## Demonstração online
+</div>
 
-Visite o [LearnPlay hospedado no Render](https://learnplay-lzk9.onrender.com) para explorar este mini projeto: navegue pelo catálogo de cursos, veja as páginas de detalhes e experimente os fluxos demonstrativos de conta, matrícula, aulas e progresso. Pagamentos e reprodução de vídeos são apenas demonstrações; não há cobrança real nem conteúdo de vídeo hospedado.
+---
 
+## Sobre o projeto
 
-## Executar com Docker Compose
+O **LearnPlay** é um protótipo acadêmico de plataforma de aprendizagem online. A aplicação reúne o fluxo de quem procura um curso, acompanha aulas e conclui atividades com as ferramentas de quem cria conteúdos e administra a plataforma.
 
-1. Instale Docker Desktop com Compose.
-2. Na raiz do repositório — a pasta que contém `compose.yaml` — execute `docker compose up --build`.
-3. Abra `http://localhost:5173`. A API responde em `http://localhost:5000/api/v1/health/ready`.
-4. Para apagar dados e recomeçar: `docker compose down -v`.
+O projeto inclui uma **SPA em React** e uma **API REST em Flask**, com persistência em banco de dados, autorização por perfil e funcionalidades demonstrativas de matrícula e aprendizagem. A interface utiliza uma identidade em **vinho e grafite**, com alternância entre temas claro e escuro e ajustes de acessibilidade.
 
-O Compose usa valores locais de exemplo. Altere-os antes de qualquer ambiente compartilhado.
+> **Importante:** o projeto é uma demonstração funcional, não um serviço comercial. O pagamento, o player de vídeo e o envio de notificações externas são simulados. Nenhuma cobrança real é processada.
 
-No código, alguns identificadores internos ainda usam `learnplay` (por exemplo, a pasta `backend/learnplay`, o cookie de sessão e os e-mails de demonstração `@learnplay.local`). Eles não são o nome exibido no site; a marca da interface é `descomplica cursos`.
+## Funcionalidades
 
-## Publicar no Render
+| Perfil | Recursos disponíveis |
+| --- | --- |
+| **Visitante** | Explorar o catálogo, pesquisar por título e descrição, filtrar por categoria e consultar detalhes dos cursos. |
+| **Aluno** | Cadastrar-se, entrar, matricular-se, salvar favoritos, retomar aulas, registrar conclusões, acompanhar progresso, responder avaliações e emitir certificado imprimível quando elegível. |
+| **Professor** | Criar rascunhos de cursos, adicionar aulas, configurar avaliação e publicar cursos válidos. |
+| **Administrador** | Consultar usuários, alterar perfis, suspender ou reativar contas e excluir contas de aluno com confirmação. |
 
-O repositório inclui `render.yaml` (Blueprint) e o Dockerfile da raiz. O container compila o frontend React/Vite para produção e o Flask serve os arquivos e a API no mesmo domínio. O Blueprint cria o serviço web e um PostgreSQL gerenciado.
+### Experiência de aprendizagem
 
-1. Envie a pasta do trabalho para um repositório GitHub. Não envie `.env` nem credenciais.
-2. No Render, crie um Blueprint e conecte esse repositório. O Render lê `render.yaml` e mostra os serviços antes de criá-los.
-3. Quando solicitado, informe três senhas fortes diferentes para as contas de demonstração (aluna, professor e administrador). Guarde-as; o Render não as exibe novamente no assistente.
-<<<<<<< HEAD
-4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL exibida pelo Render para o serviço criado.
-=======
-4. Confirme a criação e aguarde o deploy ficar `Live`. Abra a URL `onrender.com` exibida na página do serviço web; o endereço pode manter um identificador antigo mesmo depois da troca do nome visual.
->>>>>>> 4fe7e88 (Alinhar documentação ao protótipo entregue)
+- **Matrículas:** cursos gratuitos com ativação e cursos pagos com confirmação **demonstrativa**.
+- **Progresso persistido:** conclusão de aula idempotente, percentual calculado no backend e retomada da última aula acessada.
+- **Avaliações:** tentativas limitadas e correção realizada no servidor.
+- **Painel do aluno:** cursos em andamento e gráfico de conclusão alimentado pelos dados das matrículas ativas.
+- **Interface:** responsividade, temas claro/escuro, estados de foco, animações leves e respeito à preferência por movimento reduzido.
+- **Notificações na interface:** avisos de ações e erros apresentados ao usuário.
 
-O plano gratuito do PostgreSQL expira após 30 dias e os serviços web gratuitos podem dormir quando ficam sem tráfego. Para manter o banco e os dados por mais tempo, escolha um plano PostgreSQL pago antes da expiração. Consulte [limitações dos planos gratuitos do Render](https://render.com/docs/free).
+## Tecnologias
 
-O worker de notificações não faz parte do Blueprint gratuito: o Render não oferece instância gratuita para Background Worker. A plataforma principal funciona sem ele, mas notificações da outbox ficam pendentes. Para executar o worker no Render, crie um Background Worker pago a partir do mesmo repositório e Dockerfile, com comando `python worker.py` e as mesmas variáveis `DATABASE_URL` e `SEED_DEMO` do serviço web.
+| Camada | Tecnologias |
+| --- | --- |
+| **Frontend** | React 19, TypeScript, Vite 8, HTML e CSS |
+| **Componentes e visual** | Tailwind CSS 4, componentes shadcn/ui, Lucide React |
+| **Interações** | Motion, Sonner |
+| **Dados e formulários** | TanStack Query (catálogo), React Hook Form, Zod |
+| **Gráficos** | Recharts (carregado sob demanda no painel do aluno) |
+| **API** | Python 3.12, Flask, Flask-SQLAlchemy, SQLAlchemy |
+| **Persistência** | PostgreSQL no Docker Compose/Render; SQLite na execução local e nos testes |
+| **Infraestrutura e qualidade** | Docker, Docker Compose, Render, GitHub Actions e pytest |
 
-## Executar sem Docker
+> As bibliotecas são integradas de forma incremental: o **TanStack Query** atende atualmente ao catálogo, e os componentes shadcn/ui não substituem toda a interface original.
 
-Requer Python 3.12+, Node 24+ e rede local disponível.
+## Arquitetura implementada
 
-Terminal 1 (PowerShell):
+```mermaid
+flowchart LR
+    P["Visitante / Aluno / Professor / Admin"] --> UI["Frontend React + TypeScript"]
+    UI -->|"HTTP /api/v1"| API["API REST Flask"]
+    API <--> DB[("PostgreSQL / SQLite local")]
+    Worker["Worker de notificações demonstrativas"] <--> DB
+```
+
+O frontend chama a API pelo prefixo `/api/v1`. No **Render**, o `Dockerfile` da raiz compila o frontend com Vite; o Flask entrega os arquivos estáticos e a API no mesmo serviço. No **Docker Compose**, o frontend Vite, a API, o PostgreSQL e o worker executam em serviços separados.
+
+O código do protótipo mantém parte das regras e dos modelos concentrada em `backend/learnplay/app.py`. Os documentos de arquitetura descrevem também a **estrutura-alvo**, que não deve ser confundida com todos os componentes já implementados.
+
+### Estrutura principal
+
+```text
+Learn-Play/
+├── .github/workflows/quality.yml   # Build e testes automatizados
+├── frontend/
+│   ├── src/
+│   │   ├── components/              # Páginas de catálogo e componentes de UI
+│   │   ├── features/                # Painel e gráfico de progresso
+│   │   ├── motion/                  # Comportamento de animações
+│   │   ├── main.tsx                 # Aplicação React e navegação
+│   │   ├── model.ts                 # Tipos de domínio compartilhados
+│   │   ├── style.css                # Estilos base e responsividade
+│   │   └── design-refresh.css       # Identidade visual vinho/grafite
+│   └── package.json
+├── backend/
+│   ├── learnplay/app.py             # Modelos, regras e endpoints Flask
+│   ├── tests/test_api.py            # Testes da API
+│   ├── init_db.py                   # Inicialização de dados e esquema
+│   ├── worker.py                    # Outbox demonstrativa
+│   └── wsgi.py
+├── contratos/openapi.yaml          # Contrato da API
+├── diagramas/                      # Diagramas Mermaid
+├── adrs/                           # Registros de decisões arquiteturais
+├── compose.yaml                    # Ambiente local com PostgreSQL
+├── Dockerfile                      # Build de produção
+└── render.yaml                     # Configuração do Render
+```
+
+## Como executar
+
+### Opção 1 — Docker Compose
+
+**Pré-requisito:** Docker com Docker Compose.
+
+Na raiz do repositório:
+
+```bash
+git clone https://github.com/saleslima567-dotcom/Learn-Play.git
+cd Learn-Play
+cp .env.example .env
+docker compose up --build
+```
+
+No Windows PowerShell, substitua `cp .env.example .env` por `Copy-Item .env.example .env`.
+
+| Serviço | Endereço local |
+| --- | --- |
+| **Aplicação** | [http://localhost:5173](http://localhost:5173) |
+| **Health check da API** | [http://localhost:5000/api/v1/health/ready](http://localhost:5000/api/v1/health/ready) |
+
+Os valores de `.env.example` são **apenas para desenvolvimento local**. Troque as credenciais e os segredos antes de utilizar um ambiente compartilhado.
+
+Para encerrar:
+
+```bash
+docker compose down
+```
+
+**Atenção:** `docker compose down -v` também remove os volumes locais, incluindo os dados do PostgreSQL usados pelo Compose.
+
+### Opção 2 — Sem Docker
+
+**Pré-requisitos:** Node.js 24+, Python 3.12+ e npm.
+
+Inicie a API no primeiro terminal:
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python wsgi.py
 ```
 
-Terminal 2:
+Em outro terminal, na raiz do repositório:
 
-```powershell
+```bash
 cd frontend
 npm ci
 npm run dev
 ```
 
-A API usa SQLite local em `backend/learnplay/instance/learnplay.db`; Vite encaminha `/api` para `http://localhost:5000`.
+Acesse [http://localhost:5173](http://localhost:5173). O Vite encaminha `/api` para `http://localhost:5000`. Sem Docker, a aplicação usa **SQLite local**.
 
-## Contas demonstrativas
+### Contas de demonstração
 
-Os perfis de teste usam os e-mails abaixo:
+Quando os dados de demonstração estão habilitados (`SEED_DEMO=true`), existem perfis de aluno, professor e administrador. Em ambiente local, a tela de login apresenta credenciais demonstrativas.
 
-- Aluno: `aluna@learnplay.local`
-- Professor: `professor@learnplay.local`
-- Administrador: `admin@learnplay.local`
+No Render, as senhas dos perfis de teste são configuradas pelas variáveis `DEMO_STUDENT_PASSWORD`, `DEMO_INSTRUCTOR_PASSWORD` e `DEMO_ADMIN_PASSWORD`. **Não publique senhas, arquivos `.env` ou segredos no repositório.**
 
-No Render, use as senhas definidas nas variáveis `DEMO_STUDENT_PASSWORD`, `DEMO_INSTRUCTOR_PASSWORD` e `DEMO_ADMIN_PASSWORD`. Não coloque senhas reais neste repositório. Na execução local, as credenciais demonstrativas aparecem na tela de login em `localhost`.
+## Testes e integração contínua
 
-## Verificação
+O GitHub Actions executa automaticamente a compilação do frontend e os testes da API em pull requests e atualizações da branch `main`.
 
-Na pasta `backend`, execute `python -m pytest -q`. Na pasta `frontend`, execute `npm run build`.
+**Frontend:**
 
-## Limites do protótipo
+```bash
+cd frontend
+npm ci
+npm run build
+```
 
-O player é demonstrativo; não há mídia hospedada nem URL assinada S3. Pagamento é simulado na interface; não processa cartões. O worker registra notificações no log sem enviar e-mail. As metas de desempenho, disponibilidade e recuperação não foram medidas. O esquema inicial usa `create_all`; produção exige migrações versionadas, segredos protegidos e cookies seguros via HTTPS.
+**Backend:**
 
-Arquitetura, documentação, ADRs, diagramas Mermaid, contrato OpenAPI, matriz de rastreabilidade e relatório de revisão permanecem nesta pasta.
+```bash
+cd backend
+python -m pip install -r requirements.txt
+python -m pytest -q
+```
+
+Veja o resultado das execuções em **[LearnPlay Quality](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml)**.
+
+> O build e os testes existentes não substituem testes de interface em dispositivos reais, testes de carga ou avaliações de segurança completas.
+
+## Demonstração e implantação
+
+**[Abrir o LearnPlay no Render](https://learnplay-lzk9.onrender.com/)**
+
+A implantação do protótipo usa `render.yaml` e o `Dockerfile` da raiz. O serviço compila React/Vite, executa a API Flask com Gunicorn e pode usar PostgreSQL gerenciado. O worker externo de notificações não faz parte da configuração básica gratuita do serviço web.
+
+Para criar outra implantação, conecte o repositório ao Render e configure as variáveis de ambiente exigidas pelo Blueprint. O nome técnico dos recursos no `render.yaml` pode diferir da marca **LearnPlay** exibida na interface.
+
+## Limitações e próximos passos
+
+**Demonstrativo atualmente:**
+
+- **Pagamentos:** confirmação simulada; não há gateway ou cobrança real.
+- **Vídeos:** interface de player ilustrativa; não há streaming nem armazenamento S3 conectado.
+- **Notificações:** o worker processa uma outbox demonstrativa, mas não envia e-mails reais.
+- **Banco:** a inicialização do esquema não substitui migrações versionadas.
+- **Produção:** disponibilidade, desempenho sob carga, backup e recuperação não foram validados para operação comercial.
+
+**Possíveis evoluções:** testes automatizados de ponta a ponta, migrações versionadas, integrações reais de mídia e pagamento, melhoria contínua da acessibilidade e otimização do bundle de frontend.
+
+## Documentação acadêmica e técnica
+
+| Arquivo | Conteúdo |
+| --- | --- |
+| [Passo 1 — Arquitetura](./01_Passo_1_Arquitetura.md) | Contexto, requisitos e decisões iniciais |
+| [Passo 2 — Documentação](./02_Passo_2_Documentacao.md) | Visões, componentes, contratos e decisões de arquitetura |
+| [Passo 3 — Protótipo](./03_Passo_3_Prototipo.md) | Implementação e validação do protótipo acadêmico |
+| [Contrato OpenAPI](./contratos/openapi.yaml) | Endpoints da API |
+| [Diagramas](./diagramas) | Visões e fluxos em Mermaid |
+| [ADRs](./adrs) | Registros de decisões arquiteturais |
+| [Relatório de revisão](./RELATORIO_REVISAO_VALIDACAO.md) | Revisão e validação |
+| [Matriz de rastreabilidade](./matriz_rastreabilidade.csv) | Relação entre requisitos e artefatos |
+
+---
+
+<div align="center">
+
+**LearnPlay — aprender abre caminhos.**
+
+*Protótipo acadêmico em evolução.*
+
+</div>
