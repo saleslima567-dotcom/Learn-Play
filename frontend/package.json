@@ -16,7 +16,6 @@
     "@vitejs/plugin-react": "6.2.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
-    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.468.0",
     "motion": "^14.14.0",
     "radix-ui": "^1.8.1",
