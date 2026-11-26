@@ -55,3 +55,20 @@ def test_seed_production_skips_public_passwords(tmp_path, monkeypatch):
         seed_demo_data()
         assert User.query.count() == 0
         db.drop_all()
+
+
+def test_existing_demo_admin_rotates_only_insecure_password(client, monkeypatch):
+    from werkzeug.security import check_password_hash
+    monkeypatch.setenv('DEMO_ADMIN_PASSWORD', 'Test-only-unique-admin-credential!')
+    client.application.config['SESSION_COOKIE_SECURE'] = True
+    with client.application.app_context():
+        admin = User.query.filter_by(role='admin').first()
+        student = User.query.filter_by(role='student').first()
+        student.password_hash = generate_password_hash('Custom-test-student-password!', method='scrypt')
+        db.session.commit()
+        revoke_insecure_demo_sessions()
+        assert check_password_hash(admin.password_hash, 'Test-only-unique-admin-credential!')
+        assert check_password_hash(student.password_hash, 'Custom-test-student-password!')
+        first_hash = admin.password_hash
+        revoke_insecure_demo_sessions()
+        assert admin.password_hash == first_hash

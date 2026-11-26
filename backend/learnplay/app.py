@@ -109,13 +109,22 @@ def demo_password(email):
 
 
 def revoke_insecure_demo_sessions():
-    # Called on startup; do not delete users or change existing passwords.
+    # Rotate only known insecure demo passwords using operator-configured secrets.
     if not production_mode(current_app):
         return
-    for email, _, default in DEMO_ACCOUNTS:
+    defaults = {row[2] for row in DEMO_ACCOUNTS}
+    configured = [os.getenv(key, '') for _, key, _ in DEMO_ACCOUNTS]
+    for email, key, default in DEMO_ACCOUNTS:
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password_hash, default):
-            ServerSession.query.filter_by(user_id=user.id, revoked_at=None).update({'revoked_at': now_utc()})
+        if not user or not check_password_hash(user.password_hash, default):
+            continue
+        new_password = os.getenv(key, '')
+        if 16 <= len(new_password) <= 128 and new_password not in defaults and configured.count(new_password) == 1:
+            user.password_hash = generate_password_hash(new_password, method='scrypt')
+            current_app.logger.info('Rotated insecure demo credential for role=%s', user.role)
+        else:
+            current_app.logger.warning('Insecure demo credential blocked for role=%s; configure a unique strong secret in %s and redeploy.', user.role, key)
+        ServerSession.query.filter_by(user_id=user.id, revoked_at=None).update({'revoked_at': now_utc()})
     db.session.commit()
 
 
