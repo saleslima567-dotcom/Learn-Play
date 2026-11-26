@@ -229,3 +229,15 @@ Para criar outra implantação, conecte o repositório ao Render e configure as 
 *Protótipo acadêmico em evolução.*
 
 </div>
+
+## Segurança — revisão de hardening
+
+- Limites de autenticação e criação de sessão por janela de 10 minutos, armazenados no banco compartilhado. Login também tem limite por conta. Não substitui proteção de borda contra DDoS; confirme a topologia de proxies antes de configurar `TRUST_PROXY_HOPS` (0 por padrão).
+- Corpo JSON de até 128 KiB, validação de objeto, campos de autenticação e respostas de avaliação; respostas 400/413/422/429 conforme o caso.
+- Cabeçalhos anti-clickjacking, CSP parcial (não é política XSS completa), HSTS quando configurado para produção e cache privado desabilitado para API.
+- Em produção, senhas públicas de demonstração são recusadas e sessões de contas que ainda usam essas senhas são revogadas na inicialização. Contas e registros existentes não são excluídos. **Configure credenciais exclusivas por meio das variáveis protegidas do provedor.** Uma conta que ainda utiliza a senha pública pode ser recuperada ao definir seu segredo individual no Render (16 a 128 caracteres, exclusivo e não público) e executar o deploy. A rotina troca somente senhas padrão identificadas, preserva senhas personalizadas e revoga sessões antigas. Não coloque segredos em commits, logs ou documentação. A seed em produção requer três segredos exclusivos e fortes; o Blueprint desabilita a seed por padrão.
+- Tentativas de avaliação são serializadas por matrícula com bloqueio de linha no PostgreSQL. SQLite é utilizado nos testes; não oferece a mesma garantia de concorrência.
+- Flask atualizado para 3.1.3 (CVE-2026-27205) e pytest para 9.0.3. O workflow de segurança executa `pip-audit` e `npm audit --audit-level=high`. Alertas moderados da cadeia shadcn/minimatch permanecem em avaliação; aprovação da CI não implica ausência de vulnerabilidades.
+- Pagamentos e certificados continuam demonstrativos: não utilizar como comprovação comercial ou certificação formal.
+
+Pendências: validar a configuração real do Render, rotação das credenciais existentes, MFA, proteção anti-bot, auditoria de dependências transitivas, testes de concorrência PostgreSQL e avaliação de CSP completa em staging.

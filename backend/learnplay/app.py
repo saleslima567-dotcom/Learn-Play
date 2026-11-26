@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
+import time
 from html import escape as html_escape
 import os
 import secrets
@@ -10,9 +12,12 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from functools import wraps
 
-from flask import Flask, g, jsonify, make_response, request, send_from_directory
+from flask import Flask, current_app, g, jsonify, make_response, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
@@ -46,6 +51,81 @@ class ServerSession(db.Model):
     csrf_hash = db.Column(db.String(64), nullable=False)
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+
+class RateLimitBucket(db.Model):
+    key = db.Column(db.String(64), primary_key=True)
+    window = db.Column(db.BigInteger, primary_key=True)
+    count = db.Column(db.Integer, nullable=False)
+
+
+def take_rate_limit(scope, subject, limit, seconds=600):
+    # Shared, atomic counters across Gunicorn workers; no extra service required.
+    window = int(time.time()) // seconds * seconds
+    key = token_hash(scope + ':' + subject)
+    table = RateLimitBucket.__table__
+    with db.engine.begin() as conn:
+        insert = pg_insert if conn.dialect.name == 'postgresql' else sqlite_insert
+        stmt = insert(table).values(key=key, window=window, count=1)
+        stmt = stmt.on_conflict_do_update(index_elements=[table.c.key, table.c.window],
+            set_={'count': table.c.count + 1},
+            where=table.c.count < limit).returning(table.c.count)
+        allowed = conn.execute(stmt).scalar_one_or_none() is not None
+        # Expired buckets need not be retained; amortize cleanup.
+        if secrets.randbelow(100) == 0:
+            conn.execute(table.delete().where(table.c.window < int(time.time()) - 86400))
+    return allowed
+
+
+def client_address(app):
+    # Trust forwarded addresses only when an operator explicitly configures
+    # the number of trusted ingress hops. Do not trust caller-supplied prefixes.
+    address = request.remote_addr or 'unknown'
+    hops = app.config['TRUST_PROXY_HOPS']
+    if hops:
+        chain = request.headers.get('X-Forwarded-For', '').split(',')
+        if len(chain) >= hops:
+            address = chain[-hops].strip()
+    try:
+        return str(ipaddress.ip_address(address))
+    except ValueError:
+        return 'unknown'
+
+
+# Public local demonstration credentials must never be accepted in production.
+DEMO_ACCOUNTS = (
+    ('aluna@learnplay.local', 'DEMO_STUDENT_PASSWORD', 'Aluno12345!'),
+    ('professor@learnplay.local', 'DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'),
+    ('admin@learnplay.local', 'DEMO_ADMIN_PASSWORD', 'Admin123456!'),
+)
+
+
+def production_mode(app):
+    return bool(app.config['SESSION_COOKIE_SECURE'] or os.getenv('RENDER') == 'true')
+
+
+def demo_password(email):
+    return next((default for address, _, default in DEMO_ACCOUNTS if address == email), None)
+
+
+def revoke_insecure_demo_sessions():
+    # Rotate only known insecure demo passwords using operator-configured secrets.
+    if not production_mode(current_app):
+        return
+    defaults = {row[2] for row in DEMO_ACCOUNTS}
+    configured = [os.getenv(key, '') for _, key, _ in DEMO_ACCOUNTS]
+    for email, key, default in DEMO_ACCOUNTS:
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password_hash, default):
+            continue
+        new_password = os.getenv(key, '')
+        if 16 <= len(new_password) <= 128 and new_password not in defaults and configured.count(new_password) == 1:
+            user.password_hash = generate_password_hash(new_password, method='scrypt')
+            current_app.logger.info('Rotated insecure demo credential for role=%s', user.role)
+        else:
+            current_app.logger.warning('Insecure demo credential blocked for role=%s; configure a unique strong secret in %s and redeploy.', user.role, key)
+        ServerSession.query.filter_by(user_id=user.id, revoked_at=None).update({'revoked_at': now_utc()})
+    db.session.commit()
 
 
 class Course(db.Model):
@@ -206,11 +286,52 @@ def create_app(test_config=None):
         SESSION_COOKIE_NAME='learnplay_session',
         SESSION_COOKIE_SECURE=os.getenv('COOKIE_SECURE', 'false').lower() == 'true',
         SESSION_TTL_HOURS=12,
+        MAX_CONTENT_LENGTH=128 * 1024,
+        TRUST_PROXY_HOPS=int(os.getenv('TRUST_PROXY_HOPS', '0')),
+        RATE_LIMITS_ENABLED=True,
     )
     if test_config:
         app.config.update(test_config)
     os.makedirs(app.instance_path, exist_ok=True)
     db.init_app(app)
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def too_large(_error):
+        return problem(413, 'Requisição muito grande')
+
+    @app.errorhandler(BadRequest)
+    def malformed(_error):
+        return problem(400, 'Requisição inválida')
+
+    @app.before_request
+    def protect_requests():
+        if not request.path.startswith('/api/v1/'):
+            return
+        if request.content_length is not None and request.content_length > app.config['MAX_CONTENT_LENGTH']:
+            return problem(413, 'Requisição muito grande')
+        data = {}
+        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE') and request.is_json:
+            data = request.get_json()
+            if not isinstance(data, dict):
+                return problem(422, 'O corpo JSON deve ser um objeto')
+        if not app.config['RATE_LIMITS_ENABLED']:
+            return
+        path = request.path
+        ip = client_address(app)
+        buckets = []
+        if path == '/api/v1/auth/csrf':
+            buckets = [('csrf-ip', ip, 60)]
+        elif path == '/api/v1/auth/register':
+            buckets = [('register-ip', ip, 10)]
+        elif path == '/api/v1/auth/login':
+            email = data.get('email', '')
+            email = email.strip().lower()[:254] if isinstance(email, str) else ''
+            buckets = [('login-ip', ip, 30), ('login-account', email, 10)]
+        if any(not take_rate_limit(scope, subject, limit) for scope, subject, limit in buckets):
+            response = jsonify(type='about:blank', title='Limite de solicitações', status=429, detail='Muitas solicitações. Tente novamente mais tarde.')
+            response.status_code = 429
+            response.headers['Retry-After'] = str(600 - int(time.time()) % 600)
+            return response
 
     @app.before_request
     def load_session():
@@ -230,7 +351,13 @@ def create_app(test_config=None):
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['Referrer-Policy'] = 'same-origin'
-        response.headers['Cache-Control'] = 'no-store' if request.path.startswith('/api/v1/auth') else 'no-cache'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Content-Security-Policy'] = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+        response.headers['Cache-Control'] = 'no-store' if request.path.startswith('/api/v1/') else 'no-cache'
+        if request.path.startswith('/api/v1/'):
+            response.vary.add('Cookie')
+        if production_mode(app):
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000'
         return response
 
     @app.get('/')
@@ -293,8 +420,10 @@ def create_app(test_config=None):
     @app.post('/api/v1/auth/register')
     def register():
         data = request.get_json(silent=True) or {}
-        name, email, password = str(data.get('name', '')).strip(), str(data.get('email', '')).strip().lower(), str(data.get('password', ''))
-        if len(name) < 2 or len(name) > 100 or '@' not in email or len(password) < 10 or len(password) > 128:
+        if not all(isinstance(data.get(field), str) for field in ('name', 'email', 'password')):
+            return problem(422, 'Campos de cadastro inválidos')
+        name, email, password = data['name'].strip(), data['email'].strip().lower(), data['password']
+        if len(name) < 2 or len(name) > 100 or not 3 <= len(email) <= 254 or email.count('@') != 1 or not all(email.split('@')) or any(c.isspace() for c in email) or len(password) < 10 or len(password) > 128:
             return problem(422, 'Informe nome, e-mail válido e senha entre 10 e 128 caracteres')
         if User.query.filter_by(email=email).first():
             return problem(409, 'Este e-mail já está cadastrado')
@@ -310,8 +439,14 @@ def create_app(test_config=None):
     @app.post('/api/v1/auth/login')
     def login():
         data = request.get_json(silent=True) or {}
-        user = User.query.filter_by(email=str(data.get('email', '')).strip().lower()).first()
-        if not user or not check_password_hash(user.password_hash, str(data.get('password', ''))) or user.status != 'active':
+        email, password = data.get('email'), data.get('password')
+        if not isinstance(email, str) or not isinstance(password, str) or not 1 <= len(email) <= 254 or not 1 <= len(password) <= 128:
+            return problem(401, 'E-mail ou senha inválidos')
+        email = email.strip().lower()
+        if production_mode(app) and demo_password(email) == password:
+            return problem(401, 'E-mail ou senha inválidos')
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password_hash, password) or user.status != 'active':
             return problem(401, 'E-mail ou senha inválidos')
         raw, csrf_value = establish_session(user.id)
         db.session.commit()
@@ -530,7 +665,8 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
     @app.post('/api/v1/courses/<course_id>/assessments/<assessment_id>/attempts')
     @require_user('student')
     def submit_assessment(course_id, assessment_id):
-        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').first()
+        # Serialize attempts per enrollment in PostgreSQL before reading the count.
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').with_for_update().first()
         assessment = db.session.get(Assessment, assessment_id)
         if not enrollment or not assessment or assessment.course_id != course_id:
             return problem(403, 'Avaliação indisponível sem matrícula ativa')
@@ -539,7 +675,7 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
         if len(previous) >= assessment.max_attempts:
             return problem(409, 'Limite de tentativas atingido')
         answers = (request.get_json(silent=True) or {}).get('answers', {})
-        if len(answers) != len(questions):
+        if not isinstance(answers, dict) or set(answers) != {q.id for q in questions} or any(type(answers[q.id]) is not int or not 0 <= answers[q.id] < len(q.options) for q in questions):
             return problem(422, 'Responda todas as questões')
         correct = sum(1 for q in questions if str(answers.get(q.id)) == str(q.correct_option))
         score = round(100 * correct / len(questions)) if questions else 0
@@ -773,6 +909,14 @@ def seed_demo_data():
     """Seed predictable local demo accounts and the LearnPlay catalog."""
     if User.query.first():
         return
+    from flask import current_app
+    configured = [os.getenv(key) for _, key, _ in DEMO_ACCOUNTS]
+    if production_mode(current_app) and (
+        any(not value or len(value) < 16 or len(value) > 128 or value in {row[2] for row in DEMO_ACCOUNTS} for value in configured)
+        or len(set(configured)) != len(configured)
+    ):
+        current_app.logger.warning('Demo seed skipped: production requires three unique non-default secrets.')
+        return
     student = User(name='Ana Martins', email='aluna@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_STUDENT_PASSWORD', 'Aluno12345!'), method='scrypt'), role='student')
     teacher = User(name='Rafael Costa', email='professor@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'), method='scrypt'), role='instructor')
     admin = User(name='Equipe LearnPlay', email='admin@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_ADMIN_PASSWORD', 'Admin123456!'), method='scrypt'), role='admin')
@@ -813,6 +957,7 @@ if __name__ == '__main__':
         db.create_all()
         if os.getenv('SEED_DEMO', 'true').lower() == 'true':
             seed_demo_data()
+        revoke_insecure_demo_sessions()
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', '5000')), debug=False)
 
 

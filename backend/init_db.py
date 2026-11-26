@@ -1,7 +1,7 @@
 # Python / backend/init_db.py / Python 3.12 / LearnPlay one-time database initializer
 import os
 
-from learnplay.app import app, db, seed_demo_data
+from learnplay.app import app, db, seed_demo_data, revoke_insecure_demo_sessions
 
 
 def initialize_database():
@@ -15,6 +15,7 @@ def initialize_database():
             db.create_all()
             if os.getenv('SEED_DEMO', 'true').lower() == 'true':
                 seed_demo_data()
+            revoke_insecure_demo_sessions()
         finally:
             if postgres:
                 lock_connection.execute(db.text('SELECT pg_advisory_unlock(274991, 1)'))
