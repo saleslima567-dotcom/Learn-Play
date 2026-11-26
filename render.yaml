@@ -15,7 +15,10 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: SEED_DEMO
-        value: "true"
+        value: "false"
+      # Render appends the visitor address at its trusted ingress boundary.
+      - key: TRUST_PROXY_HOPS
+        value: "1"
       - key: PAYMENT_WEBHOOK_SECRET
         generateValue: true
       - key: DEMO_STUDENT_PASSWORD
