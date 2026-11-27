@@ -14,7 +14,7 @@ from functools import wraps
 
 from flask import Flask, current_app, g, jsonify, make_response, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import UniqueConstraint, func
+from sqlalchemy import UniqueConstraint, and_, case, func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
@@ -524,7 +524,24 @@ def create_app(test_config=None):
     @require_user()
     def my_enrollments():
         items = Enrollment.query.filter_by(student_id=g.user.id).order_by(Enrollment.created_at.desc()).all()
-        return jsonify(items=[e.public() for e in items])
+        active_ids = [item.course_id for item in items if item.status == 'active']
+        targets = {}
+        if active_ids:
+            # Same fallback as the classroom: saved lesson, first unfinished, then first published.
+            rows = (db.session.query(Section.course_id, Lesson.id, Lesson.title, CourseResume.id)
+                    .select_from(Lesson).join(Section, Section.id == Lesson.section_id)
+                    .outerjoin(CourseResume, and_(CourseResume.student_id == g.user.id,
+                               CourseResume.course_id == Section.course_id, CourseResume.lesson_id == Lesson.id))
+                    .outerjoin(LessonCompletion, and_(LessonCompletion.student_id == g.user.id,
+                               LessonCompletion.lesson_id == Lesson.id))
+                    .filter(Section.course_id.in_(active_ids), Lesson.status == 'published')
+                    .order_by(Section.course_id, case((CourseResume.id.is_not(None), 0),
+                              (LessonCompletion.id.is_(None), 1), else_=2),
+                              Section.position, Lesson.position, Lesson.id))
+            for course_id, lesson_id, title, saved in rows:
+                if course_id not in targets:
+                    targets[course_id] = {'id': lesson_id, 'title': title, 'saved': saved is not None}
+        return jsonify(items=[{**item.public(), 'resume_lesson': targets.get(item.course_id)} for item in items])
 
     @app.get('/api/v1/me/favorites')
     @require_user('student')

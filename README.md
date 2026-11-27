@@ -4,7 +4,7 @@
 
 **Aprender abre caminhos.**
 
-Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso. A trilha de Python inclui uma prévia interativa e missões com estimativa de prática e critérios para conferir o resultado.
+Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso. A trilha de Python inclui uma prévia interativa. As trilhas de Python e Git/GitHub têm missões com tempo sugerido e critérios de conferência. Em **Meus cursos**, cada matrícula ativa indica a aula que será aberta ao começar, continuar ou revisar.
 
 [![LearnPlay Quality](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml/badge.svg)](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml)
 ![Status](https://img.shields.io/badge/status-prot%C3%B3tipo%20acad%C3%AAmico-87283f?style=flat)

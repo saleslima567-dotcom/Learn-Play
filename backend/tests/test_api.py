@@ -70,6 +70,43 @@ def test_free_enrollment_and_lesson_progress_are_idempotent(client):
     assert len(client.get(f"/api/v1/courses/{course['id']}").json['completed_lesson_ids']) == 1
 
 
+def test_dashboard_resume_uses_the_students_published_lesson(client):
+    token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
+    headers = {'X-CSRF-Token': token}
+    course = next(row for row in client.get('/api/v1/courses').json['items'] if 'Python' in row['title'])
+    course_id = course['id']
+    assert client.post(f'/api/v1/courses/{course_id}/enrollments', headers=headers).status_code == 201
+    lessons = client.get(f'/api/v1/courses/{course_id}/lessons').json['items'][0]['lessons']
+
+    def target():
+        return client.get('/api/v1/me/enrollments').json['items'][0]['resume_lesson']
+
+    assert target() == {'id': lessons[0]['id'], 'title': lessons[0]['title'], 'saved': False}
+    client.put(f"/api/v1/lessons/{lessons[0]['id']}/completion", headers=headers)
+    assert target()['id'] == lessons[1]['id']
+    client.put(f'/api/v1/me/resume/{course_id}', json={'lesson_id': lessons[2]['id']}, headers=headers)
+    assert target() == {'id': lessons[2]['id'], 'title': lessons[2]['title'], 'saved': True}
+
+    other = client.application.test_client()
+    registration = other.post('/api/v1/auth/register', headers={'X-CSRF-Token': csrf(other)},
+                              json={'name': 'Outro aluno', 'email': 'outro@example.test', 'password': 'TesteAluno123!'})
+    other.post(f'/api/v1/courses/{course_id}/enrollments', headers={'X-CSRF-Token': registration.json['csrf_token']})
+    assert other.get('/api/v1/me/enrollments').json['items'][0]['resume_lesson']['id'] == lessons[0]['id']
+
+    with client.application.app_context():
+        db.session.get(Lesson, lessons[2]['id']).status = 'draft'
+        db.session.commit()
+    assert target()['id'] == lessons[1]['id']
+    for lesson in [lessons[1], lessons[3]]:
+        client.put(f"/api/v1/lessons/{lesson['id']}/completion", headers=headers)
+    assert target()['id'] == lessons[0]['id']
+    with client.application.app_context():
+        for lesson in lessons:
+            db.session.get(Lesson, lesson['id']).status = 'draft'
+        db.session.commit()
+    assert target() is None
+
+
 def test_paid_enrollment_requires_demo_confirmation(client):
     token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
     course = next(x for x in client.get('/api/v1/courses').json['items'] if x['price'] > 0)
