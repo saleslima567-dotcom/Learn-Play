@@ -2,7 +2,7 @@
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'lucide-react';
 import type { C, E, U } from '../model';
 import { glyph, money } from '../presentation';
-import { hasTaskProject, lessonTime, levelGuides, pythonSteps } from '../features/coursePractice';
+import { hasTaskProject, lessonTime, levelGuides, practiceSteps } from '../features/coursePractice';
 import { TaskPreview } from '../features/TaskPreview';
 import { lazy, Suspense } from 'react';
 
@@ -17,7 +17,8 @@ type DetailProps = {
 export function Detail({ c, user, enrollment, back, join, learn, login }: DetailProps) {
   const lessons = c.lessons ?? [];
   const project = hasTaskProject(c);
-  const practiceMinutes = project ? lessons.reduce((sum, lesson) => sum + (pythonSteps[lesson.title]?.minutes ?? 0), 0) : 0;
+  const steps = practiceSteps(c);
+  const practiceMinutes = lessons.reduce((sum, lesson) => sum + (steps[lesson.title]?.minutes ?? 0), 0);
   const active = enrollment?.status === 'active' || c.enrollment_status === 'active';
   const completed = new Set(c.completed_lesson_ids);
   const finished = active && lessons.length > 0 && lessons.every(lesson => completed.has(lesson.id));
@@ -33,7 +34,7 @@ export function Detail({ c, user, enrollment, back, join, learn, login }: Detail
       <ol className="trail-outline">{lessons.map(lesson => <li key={lesson.id}>
         <div><strong>{lesson.title}</strong><small>{lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
           {active && completed.has(lesson.id) && ' · Concluída'}</small></div>
-        {project && pythonSteps[lesson.title] && <p>{pythonSteps[lesson.title].mission}</p>}
+        {steps[lesson.title] && <p>{steps[lesson.title].mission}</p>}
       </li>)}</ol>
     </section><aside>
       <div className={`thumb ${c.cover_color}`}>{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
@@ -48,4 +49,36 @@ export function Detail({ c, user, enrollment, back, join, learn, login }: Detail
   </main>;
 }
 export function Favorites({items,open,toggle,explore}:{items:C[];open:(id:string)=>void;toggle:(c:C)=>void;explore:()=>void}){return <main className="dash favorites-page"><small className="eyebrow">sua lista pessoal</small><h1>cursos <em>favoritos.</em></h1><p>guarde cursos para voltar a eles quando quiser.</p>{!items.length?<div className="emptybox"><Heart/><h2>seus favoritos começam aqui</h2><p>salve um curso no catálogo e ele aparecerá nesta lista.</p><button className="primary" onClick={explore}>explorar cursos　→</button></div>:<div className="grid">{items.map(c=><article className="card" key={c.id}><button className={`cover ${c.cover_color}`} onClick={()=>open(c.id)}><small>{c.category.toUpperCase()}</small><b>{glyph(c.cover_color)}</b><span>{c.level}</span></button><div className="cardbody"><small className="meta"><span><Clock3 size={12}/> {lessonTime(c.duration_minutes)} de aulas</span><span><BookOpen size={12}/> {c.lesson_count} aulas</span></small><button className="ctitle" onClick={()=>open(c.id)}>{c.title}</button><small className="teacher">◉　com {c.instructor}</small><div className="cardfoot"><b>{money(c.price)}</b><div className="card-actions"><button className="favorite-toggle active" title="Remover dos favoritos" aria-label="Remover dos favoritos" aria-pressed={true} onClick={()=>toggle(c)}><Heart size={15} fill="currentColor"/></button><button onClick={()=>open(c.id)} aria-label="Ver curso"><ArrowRight size={16}/></button></div></div></div></article>)}</div>}</main>}
-export function Mine({items,open,explore}:{items:E[];open:(c:C)=>void;explore:()=>void}){let active=items.filter(x=>x.status==='active');return <main className="dash"><small className="eyebrow">seu espaço de aprendizagem</small><h1>continue de <em>onde parou.</em></h1><p>cada aula concluída é um passo na direção dos seus objetivos.</p>{!active.length?<div className="emptybox"><BookOpen/><h2>sua jornada começa aqui</h2><p>explore o catálogo e escolha seu primeiro curso.</p><button className="primary" onClick={explore}>explorar cursos <ArrowRight size={15}/></button></div>:<><Suspense fallback={<div className="lp-progress" role="status">Carregando gráfico de progresso...</div>}><StudyProgress items={active}/></Suspense><div className="mygrid">{active.map(e=><article className="mycard" key={e.id}><div className={`mycover ${e.course.cover_color}`}>{glyph(e.course.cover_color)}</div><div><small>CURSO · {e.course.level.toUpperCase()}</small><h3>{e.course.title}</h3><div className="progress"><i style={{width:`${e.progress_percent}%`}}/></div><small>{e.progress_percent}% concluído · {e.course.lesson_count} aulas</small><button className="primary wide" onClick={()=>open(e.course)}>continuar curso　→</button></div></article>)}</div></>}</main>}
+type MineProps = { items: E[]; open: (course: C, lessonId?: string) => void; explore: () => void };
+
+export function Mine({ items, open, explore }: MineProps) {
+  const active = items.filter(item => item.status === 'active');
+  return <main className="dash">
+    <small className="eyebrow">seu espaço de aprendizagem</small><h1>continue de <em>onde parou.</em></h1>
+    <p>cada aula concluída é um passo na direção dos seus objetivos.</p>
+    {!active.length ? <div className="emptybox"><BookOpen/><h2>sua jornada começa aqui</h2>
+      <p>explore o catálogo e escolha seu primeiro curso.</p>
+      <button className="primary" onClick={explore}>explorar cursos <ArrowRight size={15}/></button></div> : <>
+      <Suspense fallback={<div className="lp-progress" role="status">Carregando gráfico de progresso...</div>}>
+        <StudyProgress items={active}/>
+      </Suspense>
+      <div className="mygrid">{active.map(item => {
+        const { course, resume_lesson: lesson, progress_percent: progress } = item;
+        let action = 'Começar';
+        if (progress === 100) action = 'Revisar';
+        else if (lesson?.saved || progress > 0) action = 'Continuar';
+        return <article className="mycard" key={item.id}>
+          <div className={`mycover ${course.cover_color}`}>{glyph(course.cover_color)}</div>
+          <div><small>CURSO · {course.level.toUpperCase()}</small><h3>{course.title}</h3>
+            <div className="progress"><i style={{width: `${progress}%`}}/></div>
+            <small>{progress}% concluído · {course.lesson_count} aulas</small>
+            {course.lesson_count > 0
+              ? <button className="primary wide resume-action" onClick={() => open(course, lesson?.id)}>
+                  {lesson ? `${action}: ${lesson.title}` : `${action} curso`}
+                </button>
+              : <p>Aguardando a publicação da primeira aula.</p>}
+          </div>
+        </article>;
+      })}</div></>}
+  </main>;
+}

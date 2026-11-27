@@ -14,7 +14,9 @@ export const categoryGoals: Record<string, string> = {
   Negócios: 'Desenvolver habilidades de negócio',
 };
 
-export const pythonSteps: Record<string, { mission: string; check: string; minutes: number }> = {
+type PracticeSteps = Record<string, { mission: string; check: string; minutes: number }>;
+
+const pythonSteps: PracticeSteps = {
   'Primeiros passos com Python': {
     mission: 'Crie tarefas.py e use print() para exibir o nome da sua lista.',
     check: 'Ao executar o arquivo, o título aparece no terminal.', minutes: 5,
@@ -37,6 +39,30 @@ export function hasTaskProject(course: C) {
   const topics = course.lesson_titles ?? course.lessons?.map(lesson => lesson.title) ?? [];
   return course.category === 'Programação' && /\bpython\b/i.test(course.title)
     && topics.includes('Projeto: lista de tarefas');
+}
+
+const gitSteps: PracticeSteps = {
+  'Versionamento na prática': {
+    mission: 'Crie um repositório de treino no GitHub com um README. Clone-o, descreva o objetivo do projeto no arquivo e registre a alteração em um commit.',
+    check: 'Execute git log -1 e confira sua mensagem. Com git status, verifique se todas as alterações foram registradas.',
+    minutes: 10,
+  },
+  'Branches e merges': {
+    mission: 'Crie a branch docs/como-usar com git switch -c docs/como-usar. Adicione uma seção de uso ao README e faça um commit nessa branch.',
+    check: 'Compare a branch com a principal usando git diff main...HEAD. Se a sua branch principal tiver outro nome, use esse nome no comando.',
+    minutes: 15,
+  },
+  'Pull requests': {
+    mission: 'Envie a branch com git push -u origin docs/como-usar e abra um pull request para a branch principal do seu repositório de treino. Explique o que mudou, revise o diff e faça o merge.',
+    check: 'O pull request aparece como integrado e a seção de uso está no README da branch principal. Guarde o link do seu pull request.',
+    minutes: 15,
+  },
+};
+
+export function practiceSteps(course: C): PracticeSteps {
+  if (hasTaskProject(course)) return pythonSteps;
+  if (course.category === 'Tecnologia' && course.title === 'Git e GitHub para equipes') return gitSteps;
+  return {};
 }
 
 export function normalizeSearch(value: string) {

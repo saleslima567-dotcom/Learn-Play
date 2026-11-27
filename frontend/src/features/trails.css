@@ -39,3 +39,5 @@
 @media (max-width: 400px) {
   .explorer-tools { grid-template-columns: minmax(0,1fr); }
 }
+
+.mycard .resume-action { white-space: normal; overflow-wrap: anywhere; height: auto; min-height: 44px; }

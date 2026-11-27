@@ -744,6 +744,14 @@ components:
         course_id: { type: string, format: uuid }
         status: { type: string, enum: [pending_payment, active, payment_failed, expired, cancelled] }
         created_at: { type: string, format: date-time }
+        resume_lesson:
+          type: object
+          nullable: true
+          description: Aula sugerida em Meus cursos. O campo saved indica uma retomada gravada pelo aluno.
+          properties:
+            id: { type: string, format: uuid }
+            title: { type: string }
+            saved: { type: boolean }
         checkout_url: { type: string, format: uri, nullable: true }
     Problem:
       type: object
