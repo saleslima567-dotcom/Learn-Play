@@ -724,6 +724,10 @@ components:
         cover_color: { type: string }
         duration_minutes: { type: integer, minimum: 0 }
         lesson_count: { type: integer, minimum: 0 }
+        lesson_titles:
+          description: Títulos de aulas publicadas, em ordem de estudo, incluídos na listagem do catálogo.
+          type: array
+          items: { type: string }
     CoursePage:
       type: object
       required: [items]

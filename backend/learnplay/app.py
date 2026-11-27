@@ -140,12 +140,14 @@ class Course(db.Model):
     cover_color = db.Column(db.String(20), nullable=False, default='violet')
     instructor = db.relationship('User', foreign_keys=[instructor_id])
 
-    def public(self, details=False):
+    def public(self, details=False, include_titles=False):
         lessons = Lesson.query.join(Section).filter(Section.course_id == self.id, Lesson.status == 'published').order_by(Section.position, Lesson.position).all()
         data = {'id': self.id, 'title': self.title, 'description': self.description, 'category': self.category,
                 'level': self.level, 'price': float(self.price), 'status': self.status,
                 'cover_color': self.cover_color, 'instructor': self.instructor.name,
                 'lesson_count': len(lessons), 'duration_minutes': sum(x.duration_seconds for x in lessons) // 60}
+        if include_titles:
+            data['lesson_titles'] = [lesson.title for lesson in lessons]
         if details:
             data['lessons'] = [x.public() for x in lessons]
             data['assessment'] = Assessment.query.filter_by(course_id=self.id).first().public() if Assessment.query.filter_by(course_id=self.id).first() else None
@@ -474,7 +476,7 @@ def create_app(test_config=None):
         if search:
             query = query.filter(Course.title.ilike(f'%{search[:100]}%'))
         items = query.order_by(Course.title).limit(min(max(request.args.get('limit', 20, type=int), 1), 100)).all()
-        return jsonify(items=[c.public() for c in items], next_cursor=None)
+        return jsonify(items=[c.public(include_titles=True) for c in items], next_cursor=None)
 
     @app.get('/api/v1/courses/<course_id>')
     def course_detail(course_id):
