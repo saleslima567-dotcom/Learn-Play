@@ -251,7 +251,8 @@ footer .footbrand{color:var(--ink)}
 /* Marca LearnPlay em cabeçalhos estreitos */
 header .brand{white-space:nowrap;font-size:clamp(14px,1.55vw,20px)}
 @media(max-width:620px){header .brand{font-size:14px;gap:6px}header .brand i{width:27px;height:27px}}
-@media(max-width:380px){.headright .plain{display:none}.headright{gap:5px}header .brand{font-size:13px}}
+nav .mobile-login { display: none; }
+@media(max-width:380px){nav .mobile-login{display:block}.headright .plain{display:none}.headright{gap:5px}header .brand{font-size:13px}}
 
 
 /* Favoritos e gestão de contas */
