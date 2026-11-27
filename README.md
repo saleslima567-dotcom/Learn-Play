@@ -4,7 +4,7 @@
 
 **Aprender abre caminhos.**
 
-Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso.
+Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso. A trilha de Python inclui uma prévia interativa e missões com estimativa de prática e critérios para conferir o resultado.
 
 [![LearnPlay Quality](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml/badge.svg)](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml)
 ![Status](https://img.shields.io/badge/status-prot%C3%B3tipo%20acad%C3%AAmico-87283f?style=flat)
@@ -29,7 +29,7 @@ O projeto inclui uma **SPA em React** e uma **API REST em Flask**, com persistê
 
 | Perfil | Recursos disponíveis |
 | --- | --- |
-| **Visitante** | Explorar o catálogo, pesquisar por título e descrição, filtrar por categoria e consultar detalhes dos cursos. |
+| **Visitante** | Explorar o catálogo, buscar cursos e aulas publicadas, combinar objetivo e nível, consultar etapas de uma trilha e experimentar a lista de tarefas do projeto de Python. |
 | **Aluno** | Cadastrar-se, entrar, matricular-se, salvar favoritos, retomar aulas, registrar conclusões, acompanhar progresso, responder avaliações e emitir certificado imprimível quando elegível. |
 | **Professor** | Criar rascunhos de cursos, adicionar aulas, configurar avaliação e publicar cursos válidos. |
 | **Administrador** | Consultar usuários, alterar perfis, suspender ou reativar contas e excluir contas de aluno com confirmação. |

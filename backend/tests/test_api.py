@@ -35,6 +35,21 @@ def test_catalog_public_and_contains_seed_courses(client):
     assert response.json['items'][0]['lesson_count'] > 0
 
 
+def test_catalog_indexes_published_lessons_in_study_order(client):
+    with client.application.app_context():
+        course = Course.query.filter_by(title='Python do zero ao primeiro projeto').one()
+        section = Section.query.filter_by(course_id=course.id).first()
+        db.session.add(Lesson(section_id=section.id, title='Aula em preparação', position=5, status='draft'))
+        db.session.commit()
+        course_id = course.id
+    summary = next(row for row in client.get('/api/v1/courses').json['items'] if row['id'] == course_id)
+    assert summary['lesson_titles'] == [
+        'Primeiros passos com Python', 'Variáveis e tipos de dados',
+        'Decisões e repetições', 'Projeto: lista de tarefas',
+    ]
+    assert len(summary['lesson_titles']) == summary['lesson_count']
+
+
 def test_csrf_blocks_mutation_without_token(client):
     response = client.post('/api/v1/auth/login', json={'email': 'x', 'password': 'y'})
     assert response.status_code == 403
