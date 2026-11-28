@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 export function TaskPreview() {
+  const inputId = useId();
   const [tasks, setTasks] = useState([{ id: 0, label: 'Executar meu primeiro programa', done: false }]);
   const [input, setInput] = useState('');
   const completed = tasks.filter(task => task.done).length;
@@ -16,8 +17,8 @@ export function TaskPreview() {
       setTasks(items => [...items, { id: items.length, label, done: false }]);
       setInput('');
     }}>
-      <label htmlFor="preview-task">Nova tarefa</label>
-      <div><input id="preview-task" value={input} maxLength={80} disabled={tasks.length >= 8}
+      <label htmlFor={inputId}>Nova tarefa</label>
+      <div><input id={inputId} value={input} maxLength={80} disabled={tasks.length >= 8}
         onChange={event => setInput(event.target.value)} placeholder="Ex.: revisar variáveis" />
       <button className="primary" disabled={!input.trim() || tasks.length >= 8}>Adicionar</button></div>
     </form>

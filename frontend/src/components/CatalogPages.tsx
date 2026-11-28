@@ -2,24 +2,29 @@
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'lucide-react';
 import type { C, E, U } from '../model';
 import { glyph, money } from '../presentation';
-import { hasTaskProject, lessonTime, levelGuides, courseGuide } from '../features/coursePractice';
+import { hasTaskProject, lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
 import { TaskPreview } from '../features/TaskPreview';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 
 const StudyProgress = lazy(() => import('../features/StudyProgress').then(module => ({ default: module.StudyProgress })));
 
 export function InfoPage({type,back}:{type:'about'|'help';back:()=>void}){const about=type==='about',cards=about?[['Cursos práticos','Conteúdo organizado em aulas e avaliações para acompanhar seu aprendizado.'],['Para aprender e ensinar','A plataforma demonstra áreas para alunos, professores e administração.'],['Protótipo acadêmico','Matrícula paga, player e notificações são demonstrativos; não há cobrança nem transmissão de vídeo.']]:[['Como começo um curso?','Abra um curso no catálogo, faça login ou crie sua conta e solicite a matrícula.'],['Como concluo as aulas?','Entre em “meus cursos”, abra a aula e marque-a como concluída. O progresso é atualizado pela plataforma.'],['Como obtenho o certificado?','Depois de concluir todas as aulas de um curso, abra os detalhes e use “emitir certificado”. A página permite imprimir ou salvar como PDF.'],['Há pagamentos ou vídeos reais?','Não neste protótipo. A confirmação de pagamento é simulada e o player apenas ilustra a tela da aula.']];return <main className="dash info-page"><button className="back" onClick={back}>← voltar ao catálogo</button><small className="eyebrow">{about?'sobre a LearnPlay':'central de ajuda'}</small><h1>{about?<>Aprender <em>abre caminhos.</em></>:<>Como podemos <em>ajudar?</em></>}</h1><p>{about?'Uma demonstração de plataforma de cursos online, com catálogo, matrícula, acompanhamento de aulas e avaliações.':'Respostas sobre os fluxos disponíveis e os limites desta demonstração.'}</p><div className="info-grid">{cards.map(([title,body])=><article className="info-card" key={title}><span>✦</span><h2>{title}</h2><p>{body}</p></article>)}</div><button className="primary" onClick={back}>explorar cursos　→</button></main>}
 type DetailProps = {
   c: C; user: U | null; enrollment?: E; back: () => void;
-  join: () => void; learn: () => void; login: () => void;
+  join: () => void; learn: () => void; login: () => void; selectedLesson?: string;
 };
 
-export function Detail({ c, user, enrollment, back, join, learn, login }: DetailProps) {
+export function Detail({ c, user, enrollment, back, join, learn, login, selectedLesson }: DetailProps) {
   const lessons = c.lessons ?? [];
+  const highlightedLesson = useRef<HTMLLIElement>(null);
+  const selectedIndex = selectedLesson ? lessons.findIndex(lesson => lesson.title === selectedLesson) : -1;
+  useEffect(() => {
+    if (selectedIndex >= 0) highlightedLesson.current?.focus();
+  }, [c.id, selectedIndex]);
   const project = hasTaskProject(c);
   const guide = courseGuide(c);
   const steps = guide?.steps ?? {};
-  const practiceMinutes = lessons.reduce((sum, lesson) => sum + (steps[lesson.title]?.minutes ?? 0), 0);
+  const practiceMinutes = practiceTime(c);
   const active = enrollment?.status === 'active' || c.enrollment_status === 'active';
   const completed = new Set(c.completed_lesson_ids);
   const finished = active && lessons.length > 0 && lessons.every(lesson => completed.has(lesson.id));
@@ -35,7 +40,9 @@ export function Detail({ c, user, enrollment, back, join, learn, login }: Detail
       </section>}
       {project && <TaskPreview/>}
       <h2>Etapas da trilha</h2>
-      <ol className="trail-outline">{lessons.map(lesson => <li key={lesson.id}>
+      <ol className="trail-outline">{lessons.map((lesson, index) => <li key={lesson.id}
+        ref={index === selectedIndex ? highlightedLesson : undefined}
+        tabIndex={index === selectedIndex ? -1 : undefined}>
         <div><strong>{lesson.title}</strong><small>{lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
           {active && completed.has(lesson.id) && ' · Concluída'}</small></div>
         {steps[lesson.title] && <p>{steps[lesson.title].mission}</p>}

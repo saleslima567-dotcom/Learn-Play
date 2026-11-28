@@ -41,3 +41,47 @@
 }
 
 .mycard .resume-action { white-space: normal; overflow-wrap: anywhere; height: auto; min-height: 44px; }
+
+header nav a {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  align-content: center;
+}
+header nav a:hover, header nav a[aria-current] { color: var(--purple); text-decoration: underline; }
+.discovery-intro { max-width: 42rem; margin-bottom: 2rem; }
+.discovery-intro p, .project-card p { color: var(--muted); line-height: 1.6; }
+.discovery-link {
+  background: none;
+  border: 0;
+  color: var(--purple);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+.discovery-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
+.project-card, .topic-course { border: 1px solid var(--line); border-radius: 1rem; background: var(--surface-raised); }
+.project-card-copy, .topic-course { padding: clamp(1rem, 3vw, 1.5rem); }
+.project-card h2, .project-card h3, .topic-course h3 { margin: .35rem 0; line-height: 1.25; overflow-wrap: anywhere; }
+.project-category, .project-metadata { color: var(--muted); font-size: .875rem; }
+.project-demo { border-top: 1px solid var(--line); padding-inline: 1rem; }
+.project-demo summary { color: var(--purple); cursor: pointer; padding: .8rem 0; }
+.project-demo form > div { flex-wrap: wrap; }
+.discovery-toolbar { display: flex; align-items: end; gap: 1rem; justify-content: space-between; margin-block: 1rem; flex-wrap: wrap; }
+.discovery-toolbar h2, .discovery-toolbar p { margin-block: .2rem; }
+.project-filter { display: grid; gap: .35rem; }
+.discovery-toolbar select { color: var(--ink); min-height: 44px; padding: .5rem .8rem; border: 1px solid var(--line); border-radius: .55rem; }
+.topic-contents { margin-block: 2rem; }
+.topic-course + .topic-course { margin-top: 1rem; }
+.topic-course ul { margin-bottom: 0; padding-left: 1.2rem; }
+.trail-outline li:focus { outline: 2px solid var(--purple); outline-offset: 3px; scroll-margin-top: 6rem; }
+@media (max-width: 950px) { header nav { gap: 9px; flex-wrap: wrap; } }
+@media (max-width: 620px) {
+  .discovery-grid { grid-template-columns: minmax(0,1fr); }
+  header nav a { min-height: 44px; }
+}
