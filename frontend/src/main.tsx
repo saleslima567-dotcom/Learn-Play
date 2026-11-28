@@ -6,6 +6,7 @@ import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, readDiscoveryPage } from './features/Discovery';
+import { pythonLessonFor } from './features/pythonLessons';
 import { courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
@@ -179,6 +180,7 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
   const [submitting, setSubmitting] = useState(false);
   const selected = lessons.find(lesson => lesson.id === selectedId) ?? lessons.find(lesson => !lesson.completed) ?? lessons[0];
   const mission = selected ? courseGuide(course)?.steps[selected.title] : undefined;
+  const written = selected ? pythonLessonFor(course, selected.title) : undefined;
   useEffect(() => {
     if (selected && !reviewing) remember(course.id, selected);
   }, [course.id, selected?.id, remember, reviewing]);
@@ -225,10 +227,19 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
           || Object.keys(answers).length !== assessment.questions.length}>{submitting ? 'Enviando…' : 'Enviar respostas'}</button>
       </form> : selected && <>
         {reviewing && <button className="discovery-link" onClick={returnToAssessment}>Voltar à avaliação</button>}
-        <div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div>
+        {!written && <div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div>}
         <small className="eyebrow">aula {String(lessons.indexOf(selected) + 1).padStart(2, '0')}</small>
-        <h2 id="lesson-content-title" tabIndex={-1}>{selected.title}</h2><p>{selected.description}</p>
-        {mission && <div className="lesson-mission"><small className="eyebrow">Missão prática · cerca de {mission.minutes} min</small>
+        <h2 id="lesson-content-title" tabIndex={-1}>{selected.title}</h2>
+        {written ? <div className="written-lesson">
+          {written.explanation.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+          <h3>Exemplo em Python</h3>
+          <pre><code>{written.example}</code></pre>
+          <p><strong>Resultado esperado.</strong> {written.expected}</p>
+          <div className="lesson-mission">
+            <h3>Agora pratique</h3><p>{written.exercise}</p><p><strong>Como conferir.</strong> {written.check}</p>
+          </div>
+        </div> : <p>{selected.description}</p>}
+        {mission && !written && <div className="lesson-mission"><small className="eyebrow">Missão prática · cerca de {mission.minutes} min</small>
           <h3>{mission.mission}</h3><p><strong>Como conferir</strong> · {mission.check}</p></div>}
         <button className="primary" disabled={selected.completed} onClick={() => done(selected)}>
           {selected.completed ? '✓ aula concluída' : 'marcar como concluída　✓'}</button>
