@@ -196,6 +196,35 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '503': { description: Integração externa temporariamente indisponível }
+  /me/projects/{courseId}:
+    put:
+      tags: [Enrollments]
+      summary: Registrar ou atualizar o link privado da entrega após concluir as aulas
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, format: uri, maxLength: 2048 }
+      responses:
+        '200':
+          description: Entrega registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project_url: { type: string, format: uri }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /me/enrollments:
     get:
       tags: [Enrollments]
@@ -428,6 +457,9 @@ paths:
                   best_score: { type: number, minimum: 0, maximum: 100 }
                   passed: { type: boolean }
                   attempts_remaining: { type: integer, minimum: 0 }
+                  incorrect_question_ids:
+                    type: array
+                    items: { type: string, format: uuid }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -724,6 +756,11 @@ components:
         cover_color: { type: string }
         duration_minutes: { type: integer, minimum: 0 }
         lesson_count: { type: integer, minimum: 0 }
+        project_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Link privado da entrega do aluno autenticado na ficha do curso.
         lesson_titles:
           description: Títulos de aulas publicadas, em ordem de estudo, incluídos na listagem do catálogo.
           type: array

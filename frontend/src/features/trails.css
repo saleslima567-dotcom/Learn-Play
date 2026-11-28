@@ -90,3 +90,8 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 .project-scenario label { display: flex; gap: .6rem; align-items: center; min-height: 44px; padding-block: .4rem; }
 .project-scenario p[role="status"]:empty { display: none; }
 .first-lesson-action { min-height: 44px; color: var(--purple); font-size: .9rem; }
+.discovery-actions { display: flex; gap: .5rem 1.25rem; flex-wrap: wrap; }
+.project-achievement { margin-top: 1.5rem; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 1rem; }
+.project-achievement form { display: grid; gap: .6rem; }
+.project-achievement input { width: 100%; min-height: 44px; font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .5rem; }
+.project-achievement button { justify-self: start; }
