@@ -26,7 +26,7 @@ export function CourseExplorer(props: Props) {
     props.setCategory(''); props.setLevel(''); props.setSearch('');
   }
   return <section className="catalog explorer" id="catalog" aria-labelledby="catalog-heading">
-    <div className="sectiontop"><h1 id="catalog-heading">Cursos</h1></div>
+    <div className="sectiontop"><h2 id="catalog-heading" tabIndex={-1}>Encontre seu <em>próximo curso</em></h2></div>
     <div className="explorer-tools">
       <label>O que você quer aprender?
         <span className="explorer-search"><Search size={17}/><input id="search" type="search" value={search}

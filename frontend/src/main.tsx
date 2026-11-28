@@ -5,7 +5,7 @@ import { WeeklyMission } from './features/WeeklyMission';
 import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
-import { Discovery, projectsUrl, readDiscoveryPage, topicsUrl } from './features/Discovery';
+import { Discovery, readDiscoveryPage } from './features/Discovery';
 import { courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
@@ -31,6 +31,30 @@ function SV(next: string) {
   }
   setView(next);
 }
+const menuToggle = React.useRef<HTMLButtonElement>(null);
+
+function goToPage(next: string) {
+  const focusPage = drawer;
+  SD(false);
+  SActive(null);
+  SV(next);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  if (focusPage) {
+    requestAnimationFrame(() => {
+      const heading = document.querySelector<HTMLHeadingElement>('main h1');
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+  }
+}
+
+function scrollToCourses() {
+  const heading = document.getElementById('catalog-heading');
+  heading?.focus({ preventScroll: true });
+  heading?.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'instant' : 'smooth' });
+}
+
 useEffect(() => {
   const restore = () => { SActive(null); SD(false); setView(readDiscoveryPage()); };
   window.addEventListener('popstate', restore);
@@ -101,13 +125,23 @@ async function join(c: C, start = false) {
   }
 }
 async function learn(c:C, requestedLessonId?:string){try{await pendingResume.current;const d=await api<{items:{lessons:L[]}[];progress_percent:number}>(`/api/v1/courses/${c.id}/lessons`),detail=await api<C>(`/api/v1/courses/${c.id}`),resume=await api<{lesson_id:string|null}>(`/api/v1/me/resume/${c.id}`);detail.lessons=d.items.flatMap(x=>x.lessons);detail.resume_lesson_id=requestedLessonId ?? resume.lesson_id;SActive(detail);SV('learn')}catch(e){note((e as Error).message)}}async function toggleFavorite(c:C){if(!user){SM('login');note('entre para salvar cursos favoritos.');return}if(user.role!=='student'){note('favoritos estão disponíveis para alunos.');return}const exists=favorites.some(x=>x.id===c.id);try{if(exists){await api(`/api/v1/me/favorites/${c.id}`,{method:'DELETE'});SFav(favorites.filter(x=>x.id!==c.id));note('curso removido dos favoritos.')}else{await api(`/api/v1/me/favorites/${c.id}`,{method:'POST'});SFav([c,...favorites]);note('curso salvo nos favoritos.')}}catch(e){note((e as Error).message)}}async function logout(){await pendingResume.current;await api('/api/v1/auth/logout',{method:'POST'});csrf='';SUser(null);SFav([]);SActive(null);SV('home');note('sessão encerrada')}
-return <div className="shell"><header><button className="brand" onClick={()=>{SActive(null);SV('home')}}><i><GraduationCap size={19}/></i>LearnPlay</button><nav id="primary-navigation" aria-label="Navegação principal" className={drawer?'show':''} onClick={()=>SD(false)}><button onClick={()=>{SActive(null);SV('home')}}>explorar</button>
-<a href={projectsUrl} aria-current={view==='projects'&&!course?'page':undefined}>Projetos</a>
-<a href={topicsUrl} aria-current={view==='topics'&&!course?'page':undefined}>Temas</a>
-<button onClick={()=>{SActive(null);SV('about')}}>sobre</button><button onClick={()=>{SActive(null);SV('help')}}>ajuda</button>{!user && <button className="mobile-login" onClick={event=>{
-  event.stopPropagation();
-  SM('login');
-}}>Entrar</button>}{user&&<button onClick={()=>{SV('mine');SActive(null)}}>meus cursos</button>}{user?.role==='student'&&<button onClick={()=>{SV('favorites');SActive(null)}}>favoritos</button>}{user?.role==='instructor'&&<button onClick={()=>{SV('teacher');SActive(null)}}>ensinar</button>}{user?.role==='admin'&&<button onClick={()=>{SV('admin');SActive(null)}}>administração</button>}</nav><div className="headright"><button className="icon theme-toggle" onClick={()=>STheme(theme==='dark'?'light':'dark')} title={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'} aria-label={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}</button><button className="searchicon" aria-label="Buscar cursos" onClick={()=>{SActive(null);SV('home');requestAnimationFrame(()=>document.getElementById('search')?.focus())}}><Search size={18}/></button>{user?<><span className="hello">{user.name.split(' ')[0]}</span><button className="icon" onClick={()=>void logout()} title="sair"><LogOut size={16}/></button></>:<><button className="plain" onClick={()=>SM('login')}>entrar</button><button className="primary tiny" onClick={()=>SM('register')}>criar conta <ArrowRight size={14}/></button></>}</div><button className="hamb" type="button" aria-label={drawer?'Fechar menu':'Abrir menu'} aria-expanded={drawer} aria-controls="primary-navigation" onClick={()=>SD(!drawer)}>☰</button></header><Toaster theme={theme} position="top-right" closeButton visibleToasts={3} duration={4500} toastOptions={{className:'learnplay-toast'}} />
+return <div className="shell"><header onKeyDown={event => {
+  if (event.key === 'Escape' && drawer && !modal) {
+    SD(false);
+    menuToggle.current?.focus();
+  }
+}}>
+<button className="brand" onClick={() => goToPage('home')}><i><GraduationCap size={19}/></i>LearnPlay</button>
+<nav id="primary-navigation" aria-label="Navegação principal" className={drawer ? 'show' : ''}>
+  <button aria-current={view === 'home' && !course ? 'page' : undefined} onClick={() => goToPage('home')}>Explorar</button>
+  {user && <button aria-current={view === 'mine' && !course ? 'page' : undefined} onClick={() => goToPage('mine')}>Meus cursos</button>}
+  {user?.role === 'student' && <button aria-current={view === 'favorites' ? 'page' : undefined} onClick={() => goToPage('favorites')}>Favoritos</button>}
+  <button aria-current={view === 'about' ? 'page' : undefined} onClick={() => goToPage('about')}>Sobre</button>
+  <button aria-current={view === 'help' ? 'page' : undefined} onClick={() => goToPage('help')}>Ajuda</button>
+  {!user && <button className="mobile-login" onClick={() => SM('login')}>Entrar</button>}
+  {user?.role === 'instructor' && <button aria-current={view === 'teacher' ? 'page' : undefined} onClick={() => goToPage('teacher')}>Ensinar</button>}
+  {user?.role === 'admin' && <button aria-current={view === 'admin' ? 'page' : undefined} onClick={() => goToPage('admin')}>Administração</button>}
+</nav><div className="headright"><button className="icon theme-toggle" onClick={()=>STheme(theme==='dark'?'light':'dark')} title={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'} aria-label={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}</button><button className="searchicon" aria-label="Buscar cursos" onClick={()=>{SActive(null);SV('home');requestAnimationFrame(()=>document.getElementById('search')?.focus())}}><Search size={18}/></button>{user?<><span className="hello">{user.name.split(' ')[0]}</span><button className="icon" onClick={()=>void logout()} title="sair"><LogOut size={16}/></button></>:<><button className="plain" onClick={()=>SM('login')}>entrar</button><button className="primary tiny" onClick={()=>SM('register')}>criar conta <ArrowRight size={14}/></button></>}</div><button className="hamb" ref={menuToggle} type="button" aria-label={drawer?'Fechar menu':'Abrir menu'} aria-expanded={drawer} aria-controls="primary-navigation" onClick={()=>SD(!drawer)}>☰</button></header><Toaster theme={theme} position="top-right" closeButton visibleToasts={3} duration={4500} toastOptions={{className:'learnplay-toast'}} />
 <motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={(assessment, answers) => api<AssessmentResult>(
   `/api/v1/courses/${course.id}/assessments/${assessment.id}/attempts`,
   { method: 'POST', body: JSON.stringify({ answers }) },
@@ -116,6 +150,13 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
     method: 'PUT', body: JSON.stringify({url}),
   })).project_url}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main>
+<section className="hero explore-intro" aria-labelledby="explore-title">
+  <div>
+    <h1 id="explore-title">Seu próximo passo <em>começa aqui.</em></h1>
+    <p>Aprenda no seu ritmo. Encontre cursos por assunto ou nível e veja o que você vai estudar em cada um.</p>
+    <button className="primary" onClick={scrollToCourses}>Explorar cursos <ArrowRight size={16}/></button>
+  </div>
+</section>
 <CourseExplorer courses={courses} favorites={favorites} enrollments={enrollments} category={cat} level={level} search={search}
   setCategory={SCat} setLevel={setLevel} setSearch={SS} open={open} learn={learn} toggle={toggleFavorite}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>

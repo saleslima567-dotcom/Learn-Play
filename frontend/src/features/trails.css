@@ -30,14 +30,16 @@
 
 .mycard .resume-action { white-space: normal; overflow-wrap: anywhere; height: auto; min-height: 44px; }
 
-header nav a {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  align-content: center;
+#primary-navigation button[aria-current="page"] { color: var(--purple); font-weight: 800; }
+.hero.explore-intro { grid-template-columns: minmax(0, 1fr); min-height: auto; padding-block: clamp(2rem, 6vw, 4.75rem); }
+.explore-intro h1 { margin-top: 0; }
+.explore-intro + .explorer { padding-top: clamp(2rem, 5vw, 4rem); }
+#catalog-heading { scroll-margin-top: 6rem; }
+@media (max-width: 620px) {
+  #primary-navigation.show { gap: .2rem; max-height: calc(100dvh - 5rem); overflow-y: auto; }
+  #primary-navigation button { min-height: 44px; border-radius: .55rem; }
+  #primary-navigation button[aria-current="page"] { background: var(--accent-soft); }
 }
-header nav a:hover, header nav a[aria-current] { color: var(--purple); text-decoration: underline; }
 .discovery-intro { max-width: 42rem; margin-bottom: 2rem; }
 .discovery-intro p, .project-card p { color: var(--muted); line-height: 1.6; }
 .discovery-link {
@@ -70,7 +72,6 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 @media (max-width: 950px) { header nav { gap: 9px; flex-wrap: wrap; } }
 @media (max-width: 620px) {
   .discovery-grid { grid-template-columns: minmax(0,1fr); }
-  header nav a { min-height: 44px; }
 }
 .first-lesson-action { min-height: 44px; color: var(--purple); font-size: .9rem; }
 .discovery-actions { display: flex; gap: .5rem 1.25rem; flex-wrap: wrap; }
@@ -78,5 +79,3 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 .project-achievement form { display: grid; gap: .6rem; }
 .project-achievement input { width: 100%; min-height: 44px; font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .5rem; }
 .project-achievement button { justify-self: start; }
-
-.explorer .sectiontop h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; }
