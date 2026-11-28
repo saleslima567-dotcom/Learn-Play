@@ -1,5 +1,7 @@
 import type { C } from '../model';
 
+export type TopicId = 'python' | 'git' | 'design' | 'comunicacao';
+
 export const levelGuides: Record<string, string> = {
   Iniciante: 'Comece pelos fundamentos, mesmo no seu primeiro contato com o assunto.',
   Intermediário: 'Indicado para quem já conhece os fundamentos e quer aplicá-los.',
@@ -95,24 +97,24 @@ const communicationSteps: PracticeSteps = {
   },
 };
 
-type CourseGuide = { steps: PracticeSteps; preparation: string };
+type CourseGuide = { topic: TopicId; steps: PracticeSteps; preparation: string };
 
 const pythonGuide: CourseGuide = {
-  steps: pythonSteps,
+  topic: 'python', steps: pythonSteps,
   preparation: 'Você pode começar do zero. Separe um editor de texto e um ambiente com Python 3, local ou online, em que possa criar e executar o arquivo tarefas.py.',
 };
 
 const courseGuides = new Map<string, CourseGuide>([
   ['Tecnologia/Git e GitHub para equipes', {
-    steps: gitSteps,
+    topic: 'git', steps: gitSteps,
     preparation: 'Tenha o Git instalado e uma conta no GitHub com permissão para criar um repositório de treino. Confira a instalação com git --version e saiba abrir o terminal na pasta do projeto.',
   }],
   ['Design/Design de interfaces digitais', {
-    steps: designSteps,
+    topic: 'design', steps: designSteps,
     preparation: 'Você vai usar campos de texto, rótulos e botões. Separe papel e caneta ou um editor de protótipos e combine um teste curto com alguém que possa experimentar o formulário.',
   }],
   ['Negócios/Comunicação e liderança', {
-    steps: communicationSteps,
+    topic: 'comunicacao', steps: communicationSteps,
     preparation: 'Você pode usar o cenário fictício das aulas. Separe um editor de texto ou caderno e convide alguém para ler seu aviso e dizer o que entendeu.',
   }],
 ]);
@@ -120,6 +122,12 @@ const courseGuides = new Map<string, CourseGuide>([
 export function courseGuide(course: C) {
   if (hasTaskProject(course)) return pythonGuide;
   return courseGuides.get(`${course.category}/${course.title}`);
+}
+
+export function practiceTime(course: C) {
+  const steps = courseGuide(course)?.steps;
+  const titles = course.lessons?.map(lesson => lesson.title) ?? course.lesson_titles ?? [];
+  return titles.reduce((total, title) => total + (steps?.[title]?.minutes ?? 0), 0);
 }
 
 export function normalizeSearch(value: string) {
