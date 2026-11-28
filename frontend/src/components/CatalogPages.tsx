@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'luc
 import type { C, E, U } from '../model';
 import { glyph, lessonCount, money } from '../presentation';
 import { lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
+import { hasWrittenPythonCourse } from '../features/pythonLessons';
 import { projectTitle } from '../features/Discovery';
 import { ProjectAchievement } from '../features/ProjectAchievement';
 import { lazy, Suspense, useEffect, useRef } from 'react';
@@ -67,7 +68,7 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
       <section className="course-inclusions" aria-labelledby="course-inclusions-title">
         <h2 id="course-inclusions-title">O curso inclui</h2>
         <ul>
-          <li>{lessonCount(c.lesson_count)} {c.lesson_count === 1 ? 'demonstrativa' : 'demonstrativas'}</li>
+          <li>{lessonCount(c.lesson_count)} {hasWrittenPythonCourse(c) ? (c.lesson_count === 1 ? 'escrita' : 'escritas') : (c.lesson_count === 1 ? 'demonstrativa' : 'demonstrativas')}</li>
           {c.assessment && <li>Avaliação de conhecimentos</li>}
           <li>Certificado imprimível após a conclusão</li>
         </ul>

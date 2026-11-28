@@ -98,3 +98,17 @@
 @media (max-width: 720px) {
   .detail aside.course-sidebar { position: static; }
 }
+
+.written-lesson { max-width: 70ch; line-height: 1.65; }
+.written-lesson > p { color: var(--muted); }
+.written-lesson pre {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  color: var(--ink);
+  padding: 1rem;
+  overflow: auto;
+  max-width: 100%;
+  font-size: .875rem;
+}
+.learnlayout > section { min-width: 0; }
