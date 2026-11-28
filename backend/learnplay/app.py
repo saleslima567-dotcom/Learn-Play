@@ -13,7 +13,7 @@ from decimal import Decimal
 from functools import wraps
 from urllib.parse import urlsplit
 
-from flask import Flask, current_app, g, jsonify, make_response, request, send_from_directory
+from flask import Flask, current_app, g, jsonify, make_response, render_template, request, send_from_directory, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import UniqueConstraint, and_, case, func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -207,6 +207,17 @@ class Enrollment(db.Model):
                 'created_at': self.created_at.isoformat(), 'progress_percent': progress_for(self.student_id, self.course_id)}
 
 
+class SharedCertificate(db.Model):
+    enrollment_id = db.Column(db.String(36), db.ForeignKey('enrollment.id', ondelete='CASCADE'), primary_key=True)
+    token = db.Column(db.String(32), unique=True, nullable=False)
+    holder_name = db.Column(db.String(100), nullable=False)
+    course_title = db.Column(db.String(140), nullable=False)
+    issued_at = db.Column(db.DateTime(timezone=True), nullable=False, default=now_utc)
+
+    def verification_url(self):
+        return url_for('verify_shared_certificate', token=self.token)
+
+
 class ProjectAchievement(db.Model):
     student_id = db.Column(db.String(36), db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
     course_id = db.Column(db.String(36), db.ForeignKey('course.id', ondelete='CASCADE'), primary_key=True)
@@ -298,6 +309,12 @@ def progress_for(student_id, course_id):
     return round(done * 100 / total)
 
 
+def course_lessons_completed(student_id, course_id):
+    published = Lesson.query.join(Section).filter(Section.course_id == course_id, Lesson.status == 'published')
+    completed_ids = db.session.query(LessonCompletion.lesson_id).filter_by(student_id=student_id)
+    return published.first() is not None and published.filter(~Lesson.id.in_(completed_ids)).first() is None
+
+
 def create_app(test_config=None):
     app = Flask(__name__, static_folder='static/assets', static_url_path='/assets')
     database_url = os.getenv('DATABASE_URL', 'sqlite:///learnplay.db')
@@ -375,10 +392,13 @@ def create_app(test_config=None):
     @app.after_request
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['Referrer-Policy'] = 'same-origin'
+        certificate_verification = request.path.startswith('/certificados/verificar/')
+        response.headers['Referrer-Policy'] = 'no-referrer' if certificate_verification else 'same-origin'
+        if certificate_verification:
+            response.headers['X-Robots-Tag'] = 'noindex, nofollow'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Content-Security-Policy'] = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
-        response.headers['Cache-Control'] = 'no-store' if request.path.startswith('/api/v1/') else 'no-cache'
+        response.headers['Cache-Control'] = 'no-store' if certificate_verification or request.path.startswith('/api/v1/') else 'no-cache'
         if request.path.startswith('/api/v1/'):
             response.vary.add('Cookie')
         if production_mode(app):
@@ -513,6 +533,8 @@ def create_app(test_config=None):
             if enrollment and enrollment.status == 'active':
                 achievement = db.session.get(ProjectAchievement, (g.user.id, course_id))
                 data['project_url'] = achievement.url if achievement else None
+                shared = db.session.get(SharedCertificate, enrollment.id)
+                data['certificate_verification_url'] = shared.verification_url() if shared else None
             data['completed_lesson_ids'] = [x.lesson_id for x in LessonCompletion.query.join(Lesson).join(Section).filter(LessonCompletion.student_id == g.user.id, Section.course_id == course.id).all()]
         return jsonify(data)
 
@@ -575,9 +597,7 @@ def create_app(test_config=None):
         enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').first()
         if not enrollment or enrollment.course.status != 'published':
             return problem(403, 'Matrícula ativa necessária')
-        published = Lesson.query.join(Section).filter(Section.course_id == course_id, Lesson.status == 'published')
-        completed_ids = db.session.query(LessonCompletion.lesson_id).filter_by(student_id=g.user.id)
-        if published.first() is None or published.filter(~Lesson.id.in_(completed_ids)).first() is not None:
+        if not course_lessons_completed(g.user.id, course_id):
             return problem(409, 'Conclua todas as aulas antes de registrar a entrega')
         body = request.get_json(silent=True)
         url = body.get('url') if isinstance(body, dict) else None
@@ -698,6 +718,42 @@ def create_app(test_config=None):
     @require_user('student')
     def my_progress(course_id):
         return jsonify(course_id=course_id, progress_percent=progress_for(g.user.id, course_id))
+
+    @app.route('/api/v1/me/certificates/<course_id>/share', methods=['PUT', 'DELETE'])
+    @require_user('student')
+    def share_certificate(course_id):
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id,
+                                                 status='active').with_for_update().first()
+        if not enrollment:
+            return problem(404, 'Curso ou matrícula ativa não encontrada')
+        certificate = db.session.get(SharedCertificate, enrollment.id)
+        if request.method == 'DELETE':
+            if certificate:
+                db.session.delete(certificate)
+                db.session.commit()
+            return '', 204
+        if certificate is None:
+            if not course_lessons_completed(g.user.id, course_id):
+                return problem(409, 'Conclua todas as aulas antes de compartilhar o certificado')
+            certificate = SharedCertificate(enrollment_id=enrollment.id, token=secrets.token_urlsafe(24),
+                                            holder_name=g.user.name, course_title=enrollment.course.title)
+            db.session.add(certificate)
+        # Capture the URL before commit so a concurrent revoke cannot expire the ORM instance first.
+        verification_url = certificate.verification_url()
+        db.session.commit()
+        return jsonify(verification_url=verification_url)
+
+    @app.get('/certificados/verificar/<token>')
+    def verify_shared_certificate(token):
+        certificate = None
+        if len(token) == 32:
+            certificate = (SharedCertificate.query.join(Enrollment).join(User, User.id == Enrollment.student_id)
+                           .filter(SharedCertificate.token == token, Enrollment.status == 'active',
+                                   User.status == 'active').first())
+        if not certificate:
+            return render_template('certificate_verification.html', certificate=None), 404
+        return render_template('certificate_verification.html', certificate=certificate,
+                               issued_on=certificate.issued_at.strftime('%d/%m/%Y'))
 
     @app.get('/api/v1/me/certificates/<course_id>')
     @require_user('student')
@@ -919,7 +975,8 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
             return problem(409, 'Somente contas de alunos podem ser excluídas por esta ação')
 
         enrollment_ids = db.session.query(Enrollment.id).filter_by(student_id=user.id).subquery()
-        PaymentEvent.query.filter(PaymentEvent.enrollment_id.in_(enrollment_ids)).delete(synchronize_session=False)
+        SharedCertificate.query.filter(SharedCertificate.enrollment_id.in_(enrollment_ids.select())).delete(synchronize_session=False)
+        PaymentEvent.query.filter(PaymentEvent.enrollment_id.in_(enrollment_ids.select())).delete(synchronize_session=False)
         AssessmentAttempt.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         ProjectAchievement.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         CourseResume.query.filter_by(student_id=user.id).delete(synchronize_session=False)
