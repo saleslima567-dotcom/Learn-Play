@@ -2,14 +2,13 @@ import { useId, useState } from 'react';
 
 export function TaskPreview() {
   const inputId = useId();
-  const [tasks, setTasks] = useState([{ id: 0, label: 'Executar meu primeiro programa', done: false }]);
+  const [tasks, setTasks] = useState([{ id: 0, label: 'Baixar o material da aula', done: false }]);
   const [input, setInput] = useState('');
   const completed = tasks.filter(task => task.done).length;
 
   return <section className="task-preview" aria-label="Prévia interativa da lista de tarefas">
-    <small className="eyebrow">Prévia interativa · Python</small>
-    <h2>Minha lista de tarefas</h2>
-    <p>Experimente o resultado que você vai construir no terminal.</p>
+    <h3>Minha lista de tarefas</h3>
+    <p>Adicione uma tarefa e marque quando terminar. Na trilha, você vai programar essas duas ações em Python.</p>
     <form onSubmit={event => {
       event.preventDefault();
       const label = input.trim();
@@ -19,7 +18,7 @@ export function TaskPreview() {
     }}>
       <label htmlFor={inputId}>Nova tarefa</label>
       <div><input id={inputId} value={input} maxLength={80} disabled={tasks.length >= 8}
-        onChange={event => setInput(event.target.value)} placeholder="Ex.: revisar variáveis" />
+        onChange={event => setInput(event.target.value)} placeholder="Ex.: revisar as anotações" />
       <button className="primary" disabled={!input.trim() || tasks.length >= 8}>Adicionar</button></div>
     </form>
     <ul>{tasks.map(task => <li key={task.id}><label>

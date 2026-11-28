@@ -85,13 +85,25 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
   .discovery-grid { grid-template-columns: minmax(0,1fr); }
   header nav a { min-height: 44px; }
 }
-.project-scenario fieldset { border: 0; margin: .6rem 0; padding: 0; min-inline-size: 0; }
-.project-scenario legend { font-weight: 700; margin-bottom: .65rem; }
-.project-scenario label { display: flex; gap: .6rem; align-items: center; min-height: 44px; padding-block: .4rem; }
-.project-scenario p[role="status"]:empty { display: none; }
+.preview-surface { margin-block: .75rem 1rem; padding: 1rem; background: var(--surface-soft); border: 1px solid var(--line); border-radius: .7rem; }
+.preview-surface h3 { margin: 0; font-size: 1.1rem; }
+.preview-surface p, .task-preview p { margin: .55rem 0; }
+.preview-fields, .preview-fields > div { display: grid; gap: .4rem; }
+.preview-fields { margin-top: .7rem; }
+.preview-fields input, .preview-fields textarea { background: var(--surface); border: 1px solid var(--line); padding: .6rem; border-radius: .4rem; min-width: 0; width: 100%; font: inherit; color: var(--ink); }
+.preview-fields textarea { resize: vertical; }
+.preview-fields [aria-invalid="true"] { border-color: var(--purple); }
+.preview-fields .primary { justify-self: start; }
+.preview-fields [role="alert"] { color: var(--purple); font-weight: 650; margin: 0; }
+.preview-diff pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: .6rem 0; padding: .7rem; border-radius: .4rem; background: var(--surface); }
+.preview-diff mark { background: var(--accent-soft); color: var(--ink); }
+.preview-diff .discovery-link { display: flex; }
+.preview-message { margin-top: 1rem; border-inline-start: 3px solid var(--purple); padding-inline-start: .7rem; overflow-wrap: anywhere; }
 .first-lesson-action { min-height: 44px; color: var(--purple); font-size: .9rem; }
 .discovery-actions { display: flex; gap: .5rem 1.25rem; flex-wrap: wrap; }
 .project-achievement { margin-top: 1.5rem; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 1rem; }
 .project-achievement form { display: grid; gap: .6rem; }
 .project-achievement input { width: 100%; min-height: 44px; font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .5rem; }
 .project-achievement button { justify-self: start; }
+
+.task-preview h3 { margin: 0; font-size: 1.1rem; }
