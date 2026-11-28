@@ -1,4 +1,4 @@
-import type { C } from '../model';
+import type { C, L } from '../model';
 
 type PythonLesson = {
   explanation: string[];
@@ -103,4 +103,22 @@ export function hasWrittenPythonCourse(course: C) {
 
 export function pythonLessonFor(course: C, title: string) {
   return hasWrittenPythonCourse(course) ? pythonLessons.get(title) : undefined;
+}
+
+type LessonModule = { title?: string; lessons: L[] };
+
+export function lessonModules(course: C): LessonModule[] {
+  const lessons = course.lessons ?? [];
+  if (!hasWrittenPythonCourse(course)) return [{ lessons }];
+
+  const fundamentals = lessons.filter(lesson =>
+    lesson.title === 'Primeiros passos com Python' || lesson.title === 'Variáveis e tipos de dados');
+  const project = lessons.filter(lesson =>
+    lesson.title === 'Decisões e repetições' || lesson.title === 'Projeto: lista de tarefas');
+  const extras = lessons.filter(lesson => !fundamentals.includes(lesson) && !project.includes(lesson));
+  return [
+    { title: 'Fundamentos de Python', lessons: fundamentals },
+    { title: 'Construindo sua lista de tarefas', lessons: project },
+    { title: 'Aulas complementares', lessons: extras },
+  ].filter(module => module.lessons.length > 0);
 }

@@ -6,7 +6,7 @@ import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, readDiscoveryPage } from './features/Discovery';
-import { pythonLessonFor } from './features/pythonLessons';
+import { lessonModules, pythonLessonFor } from './features/pythonLessons';
 import { courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
@@ -201,10 +201,17 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
   return <main className="learning">
     <div className="learnhead"><button className="back" onClick={back}>← meus cursos</button>　{course.title}</div>
     <div className="learnlayout"><aside><b>CONTEÚDO DO CURSO</b>
-      {lessons.map((lesson, index) => <button className={selected?.id === lesson.id && !showQuiz ? 'chosen' : ''}
-        key={lesson.id} onClick={() => { selectLesson(lesson.id); setReviewing(false); setShowQuiz(false); }}>
-        {lesson.completed ? '✓' : String(index + 1).padStart(2, '0')}　{lesson.title}
-      </button>)}
+      {lessonModules(course).map(module => <div className={module.title ? 'lesson-module' : undefined} key={module.title ?? course.id}>
+        {module.title && <div className="lesson-module-heading">
+          <h3>{module.title}</h3>
+          <small>{module.lessons.filter(lesson => lesson.completed).length} de {module.lessons.length} {module.lessons.length === 1 ? 'concluída' : 'concluídas'}</small>
+        </div>}
+        {module.lessons.map(lesson => <button className={selected?.id === lesson.id && !showQuiz ? 'chosen' : ''}
+          aria-current={selected?.id === lesson.id && !showQuiz ? 'step' : undefined}
+          key={lesson.id} onClick={() => { selectLesson(lesson.id); setReviewing(false); setShowQuiz(false); }}>
+          {lesson.completed ? '✓' : String(lessons.indexOf(lesson) + 1).padStart(2, '0')}　{lesson.title}
+        </button>)}
+      </div>)}
       {assessment && <button onClick={returnToAssessment}>◎　{assessment.title}</button>}
     </aside><section>
       {showQuiz && assessment ? <form className="quiz" onSubmit={submitQuiz}>
