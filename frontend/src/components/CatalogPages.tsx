@@ -2,7 +2,7 @@
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'lucide-react';
 import type { C, E, U } from '../model';
 import { glyph, money } from '../presentation';
-import { hasTaskProject, lessonTime, levelGuides, practiceSteps } from '../features/coursePractice';
+import { hasTaskProject, lessonTime, levelGuides, courseGuide } from '../features/coursePractice';
 import { TaskPreview } from '../features/TaskPreview';
 import { lazy, Suspense } from 'react';
 
@@ -17,7 +17,8 @@ type DetailProps = {
 export function Detail({ c, user, enrollment, back, join, learn, login }: DetailProps) {
   const lessons = c.lessons ?? [];
   const project = hasTaskProject(c);
-  const steps = practiceSteps(c);
+  const guide = courseGuide(c);
+  const steps = guide?.steps ?? {};
   const practiceMinutes = lessons.reduce((sum, lesson) => sum + (steps[lesson.title]?.minutes ?? 0), 0);
   const active = enrollment?.status === 'active' || c.enrollment_status === 'active';
   const completed = new Set(c.completed_lesson_ids);
@@ -29,6 +30,9 @@ export function Detail({ c, user, enrollment, back, join, learn, login }: Detail
       <div className="trail-facts"><span>{c.lesson_count} aulas</span><span>{lessonTime(c.duration_minutes)} de aulas</span>
         {practiceMinutes > 0 && <span>Prática sugerida · cerca de {practiceMinutes} min</span>}</div>
       {levelGuides[c.level] && <p><strong>Para quem é</strong> · {levelGuides[c.level]}</p>}
+      {guide && <section aria-labelledby="course-prerequisites">
+        <h2 id="course-prerequisites">Pré-requisitos</h2><p>{guide.preparation}</p>
+      </section>}
       {project && <TaskPreview/>}
       <h2>Etapas da trilha</h2>
       <ol className="trail-outline">{lessons.map(lesson => <li key={lesson.id}>
