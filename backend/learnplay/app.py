@@ -93,10 +93,13 @@ def client_address(app):
         return 'unknown'
 
 
+DEMO_INSTRUCTOR_EMAIL = 'professor@learnplay.local'
+
+
 # Public local demonstration credentials must never be accepted in production.
 DEMO_ACCOUNTS = (
     ('aluna@learnplay.local', 'DEMO_STUDENT_PASSWORD', 'Aluno12345!'),
-    ('professor@learnplay.local', 'DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'),
+    (DEMO_INSTRUCTOR_EMAIL, 'DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'),
     ('admin@learnplay.local', 'DEMO_ADMIN_PASSWORD', 'Admin123456!'),
 )
 
@@ -129,6 +132,15 @@ def revoke_insecure_demo_sessions():
     db.session.commit()
 
 
+# Public names in the demo catalog are separate from the account that manages the courses.
+DEMO_COURSE_INSTRUCTORS = {
+    ('Programação', 'Python do zero ao primeiro projeto'): 'Marina Azevedo',
+    ('Design', 'Design de interfaces digitais'): 'Elisa Moura',
+    ('Tecnologia', 'Git e GitHub para equipes'): 'Bruno Almeida',
+    ('Negócios', 'Comunicação e liderança'): 'Camila Nogueira',
+}
+
+
 class Course(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     instructor_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
@@ -143,9 +155,13 @@ class Course(db.Model):
 
     def public(self, details=False, include_titles=False):
         lessons = Lesson.query.join(Section).filter(Section.course_id == self.id, Lesson.status == 'published').order_by(Section.position, Lesson.position).all()
+        demo_name = None
+        if self.instructor.email == DEMO_INSTRUCTOR_EMAIL:
+            demo_name = DEMO_COURSE_INSTRUCTORS.get((self.category, self.title))
         data = {'id': self.id, 'title': self.title, 'description': self.description, 'category': self.category,
                 'level': self.level, 'price': float(self.price), 'status': self.status,
-                'cover_color': self.cover_color, 'instructor': self.instructor.name,
+                'cover_color': self.cover_color, 'instructor': demo_name or self.instructor.name,
+                'instructor_is_demo': demo_name is not None,
                 'lesson_count': len(lessons), 'duration_minutes': sum(x.duration_seconds for x in lessons) // 60}
         if include_titles:
             data['lesson_titles'] = [lesson.title for lesson in lessons]
@@ -978,7 +994,7 @@ def seed_demo_data():
         current_app.logger.warning('Demo seed skipped: production requires three unique non-default secrets.')
         return
     student = User(name='Ana Martins', email='aluna@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_STUDENT_PASSWORD', 'Aluno12345!'), method='scrypt'), role='student')
-    teacher = User(name='Rafael Costa', email='professor@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'), method='scrypt'), role='instructor')
+    teacher = User(name='Rafael Costa', email=DEMO_INSTRUCTOR_EMAIL, password_hash=generate_password_hash(os.getenv('DEMO_INSTRUCTOR_PASSWORD', 'Professor123!'), method='scrypt'), role='instructor')
     admin = User(name='Equipe LearnPlay', email='admin@learnplay.local', password_hash=generate_password_hash(os.getenv('DEMO_ADMIN_PASSWORD', 'Admin123456!'), method='scrypt'), role='admin')
     db.session.add_all([student, teacher, admin])
     db.session.flush()

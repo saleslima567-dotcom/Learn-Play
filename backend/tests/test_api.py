@@ -35,6 +35,30 @@ def test_catalog_public_and_contains_seed_courses(client):
     assert response.json['items'][0]['lesson_count'] > 0
 
 
+def test_catalog_displays_course_specific_demo_instructors(client):
+    courses = client.get('/api/v1/courses').json['items']
+    assert {row['instructor'] for row in courses} == {
+        'Marina Azevedo', 'Elisa Moura', 'Bruno Almeida', 'Camila Nogueira',
+    }
+    for row in courses:
+        detail = client.get(f"/api/v1/courses/{row['id']}").json
+        assert detail['instructor'] == row['instructor']
+        assert detail['instructor_is_demo'] is True
+
+    with client.application.app_context():
+        owner = User(name='Nome da professora', email='docente@example.test', password_hash='not-a-login', role='instructor')
+        db.session.add(owner)
+        db.session.flush()
+        other = Course(title='Design de interfaces digitais', description='Turma de outro docente',
+                       category='Design', instructor_id=owner.id, status='published')
+        db.session.add(other)
+        db.session.commit()
+        other_id = other.id
+    detail = client.get(f'/api/v1/courses/{other_id}').json
+    assert detail['instructor'] == 'Nome da professora'
+    assert detail['instructor_is_demo'] is False
+
+
 def test_catalog_indexes_published_lessons_in_study_order(client):
     with client.application.app_context():
         course = Course.query.filter_by(title='Python do zero ao primeiro projeto').one()
