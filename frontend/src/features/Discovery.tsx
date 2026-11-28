@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { C } from '../model';
 import { courseGuide, lessonTime, practiceTime } from './coursePractice';
 import type { TopicId } from './coursePractice';
-import { ProjectPreview } from './ProjectPreview';
 
 export const projectsUrl = '/?secao=projetos';
 export const topicsUrl = '/?secao=temas';
@@ -51,12 +50,8 @@ function ProjectCard({ topic, entry, open }: { topic: typeof topics[number]; ent
       <h3>{topic.project}</h3>
       <p>{topic.deliverable}</p>
       <p className="project-metadata">{course.level} · {lessonTime(minutes)} de prática sugerida</p>
-      <button className="primary" onClick={() => open(course.id)} aria-label={`Ver trilha: ${course.title}`}>Ver trilha</button>
+      <button className="primary" onClick={() => open(course.id)} aria-label={`Ver curso: ${course.title}`}>Ver curso</button>
     </div>
-    <details className="project-demo">
-      <summary>Experimentar a prévia</summary>
-      <ProjectPreview topic={topic.id}/>
-    </details>
   </article>;
 }
 
@@ -86,8 +81,8 @@ export function Discovery({ mode, courses, open, pending, failed, retry }: Props
     <div className="discovery-intro">
       {topic && <a className="discovery-link" href={topicsUrl}>Todos os temas</a>}
       <h1>{topic?.name ?? (mode === 'projects' ? 'Projetos práticos' : 'Explore por tema')}</h1>
-      <p>{topic?.description ?? (mode === 'projects' ? 'Escolha o que você quer construir e abra a trilha que ensina cada etapa.' :
-        'Encontre trilhas, aulas e projetos sobre o que você quer aprender.')}</p>
+      <p>{topic?.description ?? (mode === 'projects' ? 'Veja os projetos que você pode fazer em cada curso.' :
+        'Encontre cursos, aulas e projetos por assunto.')}</p>
       {mode === 'projects' && <div className="discovery-actions">
         <a className="discovery-link" href={topicsUrl}>Explorar por tema</a>
         <a className="discovery-link" href={weeklyUrl}>Missão da semana</a>
@@ -110,12 +105,12 @@ export function Discovery({ mode, courses, open, pending, failed, retry }: Props
       </div>}
     </section> : topic ? <>
       <section className="topic-contents" aria-labelledby="topic-lessons-heading">
-        <h2 id="topic-lessons-heading">Trilhas e aulas</h2>
-        {related.length === 0 ? <p className="empty">Ainda não há trilhas publicadas para este tema.</p> :
+        <h2 id="topic-lessons-heading">Cursos e aulas</h2>
+        {related.length === 0 ? <p className="empty">Ainda não há cursos publicados sobre este tema.</p> :
           related.map(({ course }) => <article className="topic-course" key={course.id}>
             <h3>{course.title}</h3>
             <p className="project-metadata">{course.level} · {course.lesson_count} aulas · {lessonTime(course.duration_minutes)}</p>
-            <button className="primary" onClick={() => open(course.id)}>Ver trilha</button>
+            <button className="primary" onClick={() => open(course.id)}>Ver curso</button>
             {Boolean(course.lesson_titles?.length) && <ul>{course.lesson_titles?.map((title, index) =>
               <li key={index}><button className="discovery-link" onClick={() => open(course.id, title)}>{title}</button></li>)}</ul>}
           </article>)}

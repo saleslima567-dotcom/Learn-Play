@@ -26,7 +26,7 @@ export function CourseExplorer(props: Props) {
     props.setCategory(''); props.setLevel(''); props.setSearch('');
   }
   return <section className="catalog explorer" id="catalog" aria-labelledby="catalog-heading">
-    <div className="sectiontop"><h2 id="catalog-heading">Explore as <em>trilhas</em></h2></div>
+    <div className="sectiontop"><h1 id="catalog-heading">Cursos</h1></div>
     <div className="explorer-tools">
       <label>O que você quer aprender?
         <span className="explorer-search"><Search size={17}/><input id="search" type="search" value={search}
@@ -41,16 +41,16 @@ export function CourseExplorer(props: Props) {
       </select></label>
     </div>
     {levelGuides[level] && <p className="explorer-hint">{levelGuides[level]}</p>}
-    {props.pending ? <p role="status">Carregando trilhas…</p> : props.failed ? <div role="alert">
+    {props.pending ? <p role="status">Carregando cursos…</p> : props.failed ? <div role="alert">
       <p>Não foi possível carregar o catálogo.</p><button className="back" onClick={props.retry}>Tentar novamente</button>
     </div> : <>
-      <div className="result-count"><span role="status">{results.length} {results.length === 1 ? 'trilha encontrada' : 'trilhas encontradas'}</span>
+      <div className="result-count"><span role="status">{results.length} {results.length === 1 ? 'curso encontrado' : 'cursos encontrados'}</span>
         {(search || category || level) && <button onClick={reset}>Limpar filtros</button>}</div>
       <div className="grid">{results.map(({ course, matches }) => {
         const saved = props.favorites.some(item => item.id === course.id);
         const active = props.enrollments.find(item => item.course_id === course.id && item.status === 'active');
         return <article className="card" key={course.id}>
-          <button className={`cover ${course.cover_color}`} onClick={() => props.open(course.id)} aria-label={`Ver trilha: ${course.title}`}>
+          <button className={`cover ${course.cover_color}`} onClick={() => props.open(course.id)} aria-label={`Ver curso: ${course.title}`}>
             <small>{course.category}</small><b aria-hidden="true">{glyph(course.cover_color)}</b><span>{course.level}</span>
           </button>
           <div className="cardbody">
@@ -62,13 +62,13 @@ export function CourseExplorer(props: Props) {
               <button aria-label={`${saved ? 'Remover dos' : 'Salvar nos'} favoritos: ${course.title}`}
                 aria-pressed={saved} onClick={() => props.toggle(course)}><Heart size={17} fill={saved ? 'currentColor' : 'none'}/></button>
             </div>
-            <div className="trail-actions"><button onClick={() => props.open(course.id)}>Ver trilha</button>
+            <div className="course-actions"><button onClick={() => props.open(course.id)}>Ver curso</button>
               {active && <button onClick={() => props.learn(course)}>{active.progress_percent === 100 ? 'Revisar aulas' : 'Abrir sala de aula'}</button>}
             </div>
           </div>
         </article>;
       })}</div>
-      {!results.length && <p className="empty">{courses.length ? 'Tente outro termo ou limpe os filtros para explorar todas as trilhas.' : 'Ainda não há trilhas publicadas.'}</p>}
+      {!results.length && <p className="empty">{courses.length ? 'Tente outro termo ou limpe os filtros para ver todos os cursos.' : 'Ainda não há cursos publicados.'}</p>}
     </>}
   </section>;
 }
