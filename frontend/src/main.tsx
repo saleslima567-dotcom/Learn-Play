@@ -6,7 +6,7 @@ import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, projectsUrl, readDiscoveryPage, topicsUrl } from './features/Discovery';
-import { hasTaskProject, courseGuide } from './features/coursePractice';
+import { courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
 import { Toaster, toast } from 'sonner';
@@ -48,11 +48,9 @@ const rememberLesson = React.useCallback((courseId: string, lesson: L) => {
     await api(`/api/v1/me/resume/${courseId}`, {method: 'PUT', body: JSON.stringify({lesson_id: lesson.id})});
   }).catch(() => { toast('Não foi possível salvar a aula para a próxima sessão.'); });
 }, []);
-const projectCourse = courses.find(hasTaskProject);
-const [showPreview,setShowPreview] = useState(false);
 useScrollReveal(`${loading}:${view}:${course?.id ?? ''}`);
-async function open(id:string, lesson?:string, preview = false){try{const detail=await api<C>(`/api/v1/courses/${id}`);
-  setSelectedLesson(lesson);setShowPreview(preview);SActive(detail);if(view==='learn')SV('home');scrollTo(0,0)}catch(e){note((e as Error).message)}}async function auth(email: string, password: string, name?: string) {
+async function open(id:string, lesson?:string){try{const detail=await api<C>(`/api/v1/courses/${id}`);
+  setSelectedLesson(lesson);SActive(detail);if(view==='learn')SV('home');scrollTo(0,0)}catch(e){note((e as Error).message)}}async function auth(email: string, password: string, name?: string) {
   const d = await api<{user: U; csrf_token: string}>(name ? '/api/v1/auth/register' : '/api/v1/auth/login', {
     method: 'POST', body: JSON.stringify({email, password, ...(name ? {name} : {})}),
   });
@@ -64,7 +62,7 @@ async function open(id:string, lesson?:string, preview = false){try{const detail
   SM('');
   note(`bem-vindo, ${d.user.name.split(' ')[0]}!`);
   if (pending && d.user.role === 'student') await join(pending, true);
-  else if (pending) note('Entre com uma conta de aluno para iniciar a trilha.');
+  else if (pending) note('Entre com uma conta de aluno para iniciar o curso.');
 }
 
 function startCourse(c: C) {
@@ -113,22 +111,11 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
 <motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={(assessment, answers) => api<AssessmentResult>(
   `/api/v1/courses/${course.id}/assessments/${assessment.id}/attempts`,
   { method: 'POST', body: JSON.stringify({ answers }) },
-)}/>:course?<Detail c={course} selectedLesson={selectedLesson} showPreview={showPreview} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}
+)}/>:course?<Detail c={course} selectedLesson={selectedLesson} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}
   saveProject={async url => (await api<{project_url:string}>(`/api/v1/me/projects/${course.id}`, {
     method: 'PUT', body: JSON.stringify({url}),
   })).project_url}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
-  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main><section className="hero trail-hero">
-  <div><small className="eyebrow">Catálogo LearnPlay</small>
-    <h1>O que você quer <em>aprender?</em></h1>
-    <p>Escolha uma trilha pelo seu objetivo ou encontre uma aula pelo assunto.</p>
-    <button className="primary" onClick={()=>document.getElementById('search')?.focus()}>Explorar trilhas <Search size={16}/></button>
-  </div>
-  {projectCourse && <article className="project-spotlight">
-    <small>PROJETO EM PYTHON</small><h2>Crie sua lista de tarefas</h2>
-    <pre aria-label="Exemplo em Python"><code>{'tarefas = ["Estudar Python"]\nfor tarefa in tarefas:\n    print(tarefa)'}</code></pre>
-    <button onClick={()=>void open(projectCourse.id, undefined, true)}>Experimentar a prévia <ArrowRight size={16}/></button>
-  </article>}
-</section>
+  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main>
 <CourseExplorer courses={courses} favorites={favorites} enrollments={enrollments} category={cat} level={level} search={search}
   setCategory={SCat} setLevel={setLevel} setSearch={SS} open={open} learn={learn} toggle={toggleFavorite}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>

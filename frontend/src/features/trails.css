@@ -1,39 +1,27 @@
-.hero.trail-hero { min-height: auto; padding-block: clamp(2.5rem, 6vw, 5rem); }
-.project-spotlight, .task-preview, .lesson-mission { padding: clamp(1rem, 3vw, 2rem); border-radius: 1rem; }
-.project-spotlight { position: relative; background: #39222c; color: #fff5f7; min-width: 0; }
-.project-spotlight small { color: #f0bbc9; letter-spacing: .08em; }
-.project-spotlight h2, .task-preview h2 { font-size: clamp(1.4rem, 2.5vw, 2rem); line-height: 1.2; margin: .6rem 0; }
-.project-spotlight pre { padding: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; background: #25151c; color: #f9d5e1; border-radius: .5rem; }
-.project-spotlight button, .trail-actions button, .result-count button { background: transparent; color: inherit; border: 0; text-decoration: underline; text-underline-offset: .2em; min-height: 44px; }
-.project-spotlight button { display: inline-flex; gap: .5rem; align-items: center; }
+.lesson-mission { padding: clamp(1rem, 3vw, 2rem); border-radius: 1rem; }
+.trail-actions button, .result-count button { background: transparent; color: inherit; border: 0; text-decoration: underline; text-underline-offset: .2em; min-height: 44px; }
 .explorer-tools { display: grid; grid-template-columns: minmax(0,2fr) repeat(2,minmax(0,1fr)); gap: 1rem; margin-top: 1.5rem; }
-.explorer-tools label, .task-preview form > label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 650; }
-.explorer-tools select, .explorer-search, .task-preview input:not([type=checkbox]) { border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); color: var(--ink); min-height: 44px; width: 100%; padding: .55rem .75rem; font: inherit; }
-.explorer-search, .trail-actions, .result-count, .trail-facts, .task-preview form > div { display: flex; align-items: center; gap: .65rem; }
+.explorer-tools label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 650; }
+.explorer-tools select, .explorer-search { border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); color: var(--ink); min-height: 44px; width: 100%; padding: .55rem .75rem; font: inherit; }
+.explorer-search, .course-actions, .result-count, .course-facts { display: flex; align-items: center; gap: .65rem; }
 .explorer-search input { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; }
 .explorer-search:focus-within { outline: 2px solid var(--purple); }
-.explorer-hint, .result-count, .trail-outline small { color: var(--muted); font-size: .9rem; }
+.explorer-hint, .result-count, .course-outline small { color: var(--muted); font-size: .9rem; }
 .result-count { justify-content: space-between; min-height: 3.5rem; }
 .explorer .cardbody h3 { margin: .3rem 0; }
 .explorer .cardfoot button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
-.trail-actions, .trail-facts { flex-wrap: wrap; }
-.trail-actions button { color: var(--purple); font-weight: 650; }
+.course-actions, .course-facts { flex-wrap: wrap; }
+.course-actions button { color: var(--purple); font-weight: 650; }
 .lesson-hit { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
-.trail-facts { margin: 1rem 0; }
-.trail-facts span { padding: .4rem .65rem; background: var(--surface-soft); border-radius: .4rem; font-size: .9rem; }
-.task-preview, .learning .lesson-mission { background: var(--surface-soft); color: var(--ink); margin: 1.5rem 0; border: 1px solid var(--line); }
-.task-preview form > div { margin-top: .4rem; }
-.task-preview ul { list-style: none; padding: 0; }
-.task-preview li label { display: flex; align-items: center; gap: .6rem; min-height: 44px; overflow-wrap: anywhere; }
-.task-preview input:checked + span { text-decoration: line-through; color: var(--muted); }
-.trail-outline { padding-left: 1.6rem; }
-.trail-outline li { padding: .8rem .3rem; border-bottom: 1px solid var(--line); }
-.trail-outline small { display: block; margin-top: .25rem; }
-.trail-outline p { margin: .4rem 0 0; }
+.course-facts { margin: 1rem 0; }
+.course-facts span { padding: .4rem .65rem; background: var(--surface-soft); border-radius: .4rem; font-size: .9rem; }
+.learning .lesson-mission { background: var(--surface-soft); color: var(--ink); margin: 1.5rem 0; border: 1px solid var(--line); }
+.course-outline { padding-left: 1.6rem; }
+.course-outline li { padding: .8rem .3rem; border-bottom: 1px solid var(--line); }
+.course-outline small { display: block; margin-top: .25rem; }
 @media (max-width: 720px) {
   .explorer-tools { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .explorer-tools label:first-child { grid-column: 1/-1; }
-  .project-spotlight { margin-top: 1.25rem; }
   .detail .detailgrid { grid-template-columns: minmax(0,1fr); }
 }
 @media (max-width: 400px) {
@@ -69,9 +57,8 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 .project-card-copy, .topic-course { padding: clamp(1rem, 3vw, 1.5rem); }
 .project-card h2, .project-card h3, .topic-course h3 { margin: .35rem 0; line-height: 1.25; overflow-wrap: anywhere; }
 .project-category, .project-metadata { color: var(--muted); font-size: .875rem; }
-.project-demo { border-top: 1px solid var(--line); padding-inline: 1rem; }
-.project-demo summary { color: var(--purple); cursor: pointer; padding: .8rem 0; }
-.project-demo form > div { flex-wrap: wrap; }
+.course-review { border-top: 1px solid var(--line); padding-inline: 1rem; }
+.course-review summary { color: var(--purple); cursor: pointer; padding: .8rem 0; }
 .discovery-toolbar { display: flex; align-items: end; gap: 1rem; justify-content: space-between; margin-block: 1rem; flex-wrap: wrap; }
 .discovery-toolbar h2, .discovery-toolbar p { margin-block: .2rem; }
 .project-filter { display: grid; gap: .35rem; }
@@ -79,26 +66,12 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 .topic-contents { margin-block: 2rem; }
 .topic-course + .topic-course { margin-top: 1rem; }
 .topic-course ul { margin-bottom: 0; padding-left: 1.2rem; }
-.trail-outline li:focus { outline: 2px solid var(--purple); outline-offset: 3px; scroll-margin-top: 6rem; }
+.course-outline li:focus { outline: 2px solid var(--purple); outline-offset: 3px; scroll-margin-top: 6rem; }
 @media (max-width: 950px) { header nav { gap: 9px; flex-wrap: wrap; } }
 @media (max-width: 620px) {
   .discovery-grid { grid-template-columns: minmax(0,1fr); }
   header nav a { min-height: 44px; }
 }
-.preview-surface { margin-block: .75rem 1rem; padding: 1rem; background: var(--surface-soft); border: 1px solid var(--line); border-radius: .7rem; }
-.preview-surface h3 { margin: 0; font-size: 1.1rem; }
-.preview-surface p, .task-preview p { margin: .55rem 0; }
-.preview-fields, .preview-fields > div { display: grid; gap: .4rem; }
-.preview-fields { margin-top: .7rem; }
-.preview-fields input, .preview-fields textarea { background: var(--surface); border: 1px solid var(--line); padding: .6rem; border-radius: .4rem; min-width: 0; width: 100%; font: inherit; color: var(--ink); }
-.preview-fields textarea { resize: vertical; }
-.preview-fields [aria-invalid="true"] { border-color: var(--purple); }
-.preview-fields .primary { justify-self: start; }
-.preview-fields [role="alert"] { color: var(--purple); font-weight: 650; margin: 0; }
-.preview-diff pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: .6rem 0; padding: .7rem; border-radius: .4rem; background: var(--surface); }
-.preview-diff mark { background: var(--accent-soft); color: var(--ink); }
-.preview-diff .discovery-link { display: flex; }
-.preview-message { margin-top: 1rem; border-inline-start: 3px solid var(--purple); padding-inline-start: .7rem; overflow-wrap: anywhere; }
 .first-lesson-action { min-height: 44px; color: var(--purple); font-size: .9rem; }
 .discovery-actions { display: flex; gap: .5rem 1.25rem; flex-wrap: wrap; }
 .project-achievement { margin-top: 1.5rem; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 1rem; }
@@ -106,4 +79,4 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
 .project-achievement input { width: 100%; min-height: 44px; font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .5rem; }
 .project-achievement button { justify-self: start; }
 
-.task-preview h3 { margin: 0; font-size: 1.1rem; }
+.explorer .sectiontop h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; }

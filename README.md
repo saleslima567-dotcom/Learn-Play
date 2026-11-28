@@ -4,7 +4,7 @@
 
 **Aprender abre caminhos.**
 
-Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso. A trilha de Python inclui uma prévia interativa. As quatro trilhas iniciais exibem pré-requisitos antes da matrícula e missões com tempo sugerido e critérios de conferência. Em Design, o aluno prototipa e testa um formulário. Em Comunicação, escreve um aviso, um feedback e um plano de ação. O catálogo **Projetos** permite escolher uma entrega por nível. **Temas** reúne trilhas, aulas e projetos relacionados. Em **Meus cursos**, cada matrícula ativa indica a aula que será aberta ao começar, continuar ou revisar. As quatro entregas têm prévias interativas e revisões iniciais acessíveis antes da matrícula. Depois de enviar uma avaliação, o aluno pode revisar uma aula e retornar às respostas. Após concluir uma trilha com projeto, pode registrar o link privado da entrega. O catálogo de projetos também oferece uma missão que muda na segunda-feira, no horário de Brasília.
+Plataforma web de cursos online com catálogo, matrículas, aulas, avaliações e acompanhamento de progresso. As fichas dos cursos mostram os pré-requisitos e a lista de aulas. Em **Meus cursos**, cada matrícula ativa indica de onde retomar. **Projetos** e **Temas** ajudam a encontrar cursos por entrega e assunto. Ao concluir um curso com projeto, o aluno pode registrar o link privado da entrega.
 
 [![LearnPlay Quality](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml/badge.svg)](https://github.com/saleslima567-dotcom/Learn-Play/actions/workflows/quality.yml)
 ![Status](https://img.shields.io/badge/status-prot%C3%B3tipo%20acad%C3%AAmico-87283f?style=flat)
@@ -29,7 +29,7 @@ O projeto inclui uma **SPA em React** e uma **API REST em Flask**, com persistê
 
 | Perfil | Recursos disponíveis |
 | --- | --- |
-| **Visitante** | Explorar o catálogo, buscar cursos e aulas publicadas, combinar objetivo e nível, consultar etapas de uma trilha e experimentar a lista de tarefas do projeto de Python. |
+| **Visitante** | Explorar o catálogo, buscar cursos e aulas publicadas, combinar objetivo e nível, consultar a lista de aulas e conhecer os projetos de cada curso. |
 | **Aluno** | Cadastrar-se, entrar, matricular-se, salvar favoritos, retomar aulas, registrar conclusões, acompanhar progresso, responder avaliações e emitir certificado imprimível quando elegível. |
 | **Professor** | Criar rascunhos de cursos, adicionar aulas, configurar avaliação e publicar cursos válidos. |
 | **Administrador** | Consultar usuários, alterar perfis, suspender ou reativar contas e excluir contas de aluno com confirmação. |
