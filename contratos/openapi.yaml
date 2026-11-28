@@ -13,7 +13,6 @@ tags:
   - name: Assessments
   - name: Admin
   - name: Progress
-  - name: Integrations
 paths:
   /me:
     get:
@@ -338,19 +337,83 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-  /me/enrollments/{enrollmentId}/demo-payment:
+  /me/enrollments/{enrollmentId}/payment:
+    parameters:
+      - $ref: '#/components/parameters/EnrollmentId'
+    get:
+      tags: [Enrollments]
+      summary: Consultar estado do pagamento de teste
+      security: [{ SessionCookie: [] }]
+      responses:
+        '200': { $ref: '#/components/responses/DemoPayment' }
+        '404': { $ref: '#/components/responses/NotFound' }
     post:
       tags: [Enrollments]
-      summary: Aprovar matrícula paga somente no simulador local
+      summary: Preparar Pix, crédito ou débito de teste
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [method]
+              properties:
+                method: { type: string, enum: [pix, credit, debit] }
+      responses:
+        '200': { $ref: '#/components/responses/DemoPayment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /me/enrollments/{enrollmentId}/payment/approve:
+    post:
+      tags: [Enrollments]
+      summary: Aprovar a simulação e ativar a matrícula
       security: [{ SessionCookie: [], CsrfToken: [] }]
       parameters:
+        - $ref: '#/components/parameters/EnrollmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reference]
+              properties:
+                reference: { type: string, format: uuid }
+      responses:
+        '200': { $ref: '#/components/responses/DemoPayment' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /me/enrollments/{enrollmentId}/pix/{reference}.png:
+    get:
+      tags: [Enrollments]
+      summary: Obter QR Code do Pix de teste
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/EnrollmentId'
         - in: path
-          name: enrollmentId
+          name: reference
           required: true
           schema: { type: string, format: uuid }
       responses:
-        '200': { description: Matrícula demonstrativa ativada }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '200':
+          description: QR Code da simulação
+          content:
+            image/png: {}
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/enrollments/{enrollmentId}/receipt:
+    get:
+      tags: [Enrollments]
+      summary: Baixar comprovante do pagamento simulado
+      security: [{ SessionCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/EnrollmentId'
+      responses:
+        '200':
+          description: Comprovante em PDF para download
+          content:
+            application/pdf: {}
         '404': { $ref: '#/components/responses/NotFound' }
   /lessons/{lessonId}/completion:
     put:
@@ -707,35 +770,6 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { description: A rota permite excluir somente contas com perfil de aluno }
-  /integrations/payments/webhook:
-    post:
-      tags: [Integrations]
-      summary: Receber evento de pagamento assinado com HMAC-SHA256
-      description: Confere assinatura do corpo bruto, ID único do evento, valor e BRL antes de ativar matrícula; repetição válida não repete efeitos.
-      security: []
-      parameters:
-        - in: header
-          name: X-Webhook-Signature
-          required: true
-          schema: { type: string, pattern: '^[a-f0-9]{64}$' }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [event_id, enrollment_id, status, amount, currency]
-              properties:
-                event_id: { type: string, maxLength: 160 }
-                enrollment_id: { type: string, format: uuid }
-                status: { type: string, enum: [approved, failed] }
-                amount: { type: number, minimum: 0 }
-                currency: { type: string, enum: [BRL] }
-      responses:
-        '200': { description: Evento aplicado ou repetido sem efeito adicional }
-        '401': { description: Assinatura HMAC inválida }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '422': { description: Valor/moeda divergente enviado para revisão }
 components:
   securitySchemes:
     SessionCookie:
@@ -747,6 +781,11 @@ components:
       in: header
       name: X-CSRF-Token
   parameters:
+    EnrollmentId:
+      in: path
+      name: enrollmentId
+      required: true
+      schema: { type: string, format: uuid }
     CourseId:
       in: path
       name: courseId
@@ -837,6 +876,22 @@ components:
         detail: { type: string }
         request_id: { type: string }
   responses:
+    DemoPayment:
+      description: Estado do pagamento de teste da matrícula
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [enrollment_status, available, course_title, amount, method, reference, qr_url, receipt_url]
+            properties:
+              enrollment_status: { type: string, enum: [pending_payment, payment_failed, active] }
+              available: { type: boolean }
+              course_title: { type: string }
+              amount: { type: number }
+              method: { enum: [pix, credit, debit, null] }
+              reference: { type: [string, 'null'], format: uuid }
+              qr_url: { type: [string, 'null'] }
+              receipt_url: { type: [string, 'null'] }
     Unauthorized:
       description: Autenticação necessária ou inválida
       content:

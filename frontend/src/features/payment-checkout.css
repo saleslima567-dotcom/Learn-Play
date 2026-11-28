@@ -1,0 +1,57 @@
+.payment-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(22px, 5vw, 60px) 18px 55px;
+}
+.payment-page h1 {
+  margin: 18px 0 8px;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.12;
+}
+.payment-page .payment-notice {
+  color: var(--muted);
+  margin: 0 0 26px;
+}
+.payment-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+  align-items: start;
+  gap: 16px;
+}
+.payment-summary, .payment-step, .payment-pending li {
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.payment-layout h2 { margin: 0 0 16px; font-size: 1.15rem; }
+.payment-summary span { color: var(--muted); display: block; }
+.payment-summary strong { display: block; margin-top: 4px; font-size: 1.45rem; }
+.payment-methods { padding: 0; margin: 0 0 16px; min-width: 0; border: 0; }
+.payment-methods legend { margin-bottom: 12px; padding: 0; font-weight: 700; }
+.payment-methods label {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.payment-methods label:has(input:checked) { border-color: var(--purple); background: var(--accent-soft); }
+.payment-methods input { accent-color: var(--purple); }
+.payment-layout .primary { min-height: 44px; text-align: center; text-decoration: none; }
+.payment-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 16px; }
+.payment-pix img { display: block; max-width: 100%; height: auto; background: white; border-radius: 8px; }
+.payment-pix p, .payment-step p { margin: 12px 0; }
+.payment-result svg { color: var(--purple); }
+.payment-result .primary svg { color: inherit; }
+.payment-pending ul { padding: 0; list-style: none; display: grid; gap: 8px; }
+.payment-pending li { display: flex; align-items: center; justify-content: space-between; gap: 8px 20px; flex-wrap: wrap; }
+.payment-pending button, .payment-receipt-link { min-height: 44px; }
+.payment-receipt-link { display: inline-flex; align-items: center; color: var(--purple); }
+@media (max-width: 600px) {
+  .payment-layout { grid-template-columns: 1fr; }
+}

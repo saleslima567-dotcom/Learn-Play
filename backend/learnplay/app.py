@@ -13,13 +13,16 @@ from decimal import Decimal
 from functools import wraps
 from urllib.parse import urlsplit
 
-from flask import Flask, current_app, g, jsonify, make_response, render_template, request, send_from_directory, url_for
+from flask import Flask, current_app, g, jsonify, make_response, render_template, request, send_file, send_from_directory, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import UniqueConstraint, and_, case, func
+from sqlalchemy import UniqueConstraint, and_, case, func, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 from werkzeug.security import check_password_hash, generate_password_hash
+
+
+from .demo_payments import METHODS, payment_qr, payment_receipt
 
 
 db = SQLAlchemy()
@@ -281,6 +284,15 @@ class AssessmentAttempt(db.Model):
     submitted_at = db.Column(db.DateTime(timezone=True), nullable=False, default=now_utc)
 
 
+class DemoPayment(db.Model):
+    enrollment_id = db.Column(db.String(36), db.ForeignKey('enrollment.id', ondelete='CASCADE'), primary_key=True)
+    reference = db.Column(db.String(36), nullable=False, unique=True)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    course_title = db.Column(db.String(140), nullable=False)
+    method = db.Column(db.String(12), nullable=False)
+    approved_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+
 class PaymentEvent(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     provider_event_id = db.Column(db.String(160), nullable=False, unique=True)
@@ -385,7 +397,7 @@ def create_app(test_config=None):
         else:
             g.server_session = None
             g.user = None
-        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE') and request.path != '/api/v1/integrations/payments/webhook':
+        if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
             if not g.server_session or not secrets.compare_digest(token_hash(request.headers.get('X-CSRF-Token', '')), g.server_session.csrf_hash):
                 return problem(403, 'Token CSRF ausente ou inválido')
 
@@ -544,29 +556,130 @@ def create_app(test_config=None):
         course = db.session.get(Course, course_id)
         if not course or course.status != 'published':
             return problem(404, 'Curso não encontrado')
-        existing = Enrollment.query.filter_by(student_id=g.user.id, course_id=course.id).first()
-        if existing:
-            return jsonify(existing.public()), 200
         status = 'active' if course.price == 0 else 'pending_payment'
-        enrollment = Enrollment(student_id=g.user.id, course_id=course.id, status=status, activated_at=now_utc() if status == 'active' else None)
-        db.session.add(enrollment)
-        db.session.flush()
+        insert = pg_insert if db.engine.dialect.name == 'postgresql' else sqlite_insert
+        statement = insert(Enrollment).values(
+            id=str(uuid.uuid4()), student_id=g.user.id, course_id=course.id,
+            status=status, activated_at=now_utc() if status == 'active' else None,
+        )
+        key = ['student_id', 'course_id']
         if status == 'active':
-            db.session.add(NotificationOutbox(event_key=f'enrollment:{enrollment.id}', recipient_id=g.user.id, event_type='enrollment_confirmed', payload={'course_id': course.id}))
+            statement = statement.on_conflict_do_update(
+                index_elements=key, set_={'status': status, 'activated_at': statement.excluded.activated_at},
+                where=Enrollment.status != status,
+            )
+        else:
+            statement = statement.on_conflict_do_nothing(index_elements=key)
+        created = db.session.execute(statement.returning(Enrollment.id)).scalar()
+        if created and status == 'active':
+            notify_enrollment(created, g.user.id, course.id)
         db.session.commit()
-        return jsonify(enrollment.public()), (201 if status == 'active' else 202)
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course.id).one()
+        return jsonify(enrollment.public()), (201 if status == 'active' else 202) if created else 200
 
-    @app.post('/api/v1/me/enrollments/<enrollment_id>/demo-payment')
+    def notify_enrollment(enrollment_id, student_id, course_id):
+        db.session.add(NotificationOutbox(event_key=f'enrollment:{enrollment_id}', recipient_id=student_id,
+                                          event_type='enrollment_confirmed', payload={'course_id': course_id}))
+
+    def owned_enrollment(enrollment_id, lock=False):
+        if len(enrollment_id) != 36:
+            return None
+        query = Enrollment.query.filter_by(id=enrollment_id, student_id=g.user.id)
+        if lock and db.engine.dialect.name == 'sqlite':
+            # SQLite serializes writers and does not implement SELECT FOR UPDATE.
+            db.session.execute(update(Enrollment).where(Enrollment.id == enrollment_id,
+                               Enrollment.student_id == g.user.id).values(status=Enrollment.status))
+        return (query.with_for_update() if lock else query).first()
+
+    def payment_state(enrollment, payment):
+        approved = bool(payment and payment.approved_at and enrollment.status == 'active')
+        pending = bool(enrollment.status != 'active' and enrollment.course.status == 'published' and enrollment.course.price > 0)
+        current = payment if approved or (pending and payment and payment.amount == enrollment.course.price) else None
+        return jsonify(
+            enrollment_status=enrollment.status,
+            available=pending,
+            course_title=current.course_title if current else enrollment.course.title,
+            amount=float(current.amount if current else enrollment.course.price),
+            method=current.method if current else None,
+            reference=current.reference if current else None,
+            qr_url=url_for('demo_pix_qr', enrollment_id=enrollment.id, reference=current.reference)
+            if current and current.method == 'pix' and not approved else None,
+            receipt_url=url_for('download_payment_receipt', enrollment_id=enrollment.id) if approved else None,
+        )
+
+    @app.get('/api/v1/me/enrollments/<enrollment_id>/payment')
     @require_user('student')
-    def demo_payment(enrollment_id):
-        enrollment = db.session.get(Enrollment, enrollment_id)
-        if not enrollment or enrollment.student_id != g.user.id:
+    def get_payment(enrollment_id):
+        enrollment = owned_enrollment(enrollment_id)
+        if not enrollment:
             return problem(404, 'Matrícula não encontrada')
-        if enrollment.status == 'pending_payment':
-            enrollment.status, enrollment.activated_at = 'active', now_utc()
-            db.session.add(NotificationOutbox(event_key=f'enrollment:{enrollment.id}', recipient_id=g.user.id, event_type='enrollment_confirmed', payload={'course_id': enrollment.course_id, 'demo': True}))
-            db.session.commit()
-        return jsonify(enrollment.public())
+        return payment_state(enrollment, db.session.get(DemoPayment, enrollment.id))
+
+    @app.post('/api/v1/me/enrollments/<enrollment_id>/payment')
+    @require_user('student')
+    def prepare_payment(enrollment_id):
+        enrollment = owned_enrollment(enrollment_id, lock=True)
+        if not enrollment:
+            return problem(404, 'Matrícula não encontrada')
+        payment = db.session.get(DemoPayment, enrollment.id)
+        if enrollment.status == 'active':
+            return payment_state(enrollment, payment)
+        course = enrollment.course
+        if course.price <= 0 or course.status != 'published':
+            return problem(409, 'Este curso está indisponível para pagamento')
+        data = request.get_json(silent=True)
+        method = data.get('method') if isinstance(data, dict) else None
+        if not isinstance(method, str) or method not in METHODS:
+            return problem(422, 'Escolha Pix, crédito ou débito')
+        if not payment:
+            payment = DemoPayment(enrollment_id=enrollment.id)
+            db.session.add(payment)
+        if payment.method != method or payment.amount != course.price:
+            payment.method, payment.amount = method, course.price
+            payment.course_title, payment.reference = course.title, str(uuid.uuid4())
+        db.session.commit()
+        return payment_state(enrollment, payment)
+
+    @app.post('/api/v1/me/enrollments/<enrollment_id>/payment/approve')
+    @require_user('student')
+    def approve_payment(enrollment_id):
+        enrollment = owned_enrollment(enrollment_id, lock=True)
+        if not enrollment:
+            return problem(404, 'Matrícula não encontrada')
+        payment = db.session.get(DemoPayment, enrollment.id)
+        if enrollment.status == 'active':
+            return payment_state(enrollment, payment)
+        data = request.get_json(silent=True)
+        reference = data.get('reference') if isinstance(data, dict) else None
+        if (not payment or payment.reference != reference or payment.amount != enrollment.course.price
+                or enrollment.course.price <= 0 or enrollment.course.status != 'published'):
+            return problem(409, 'Os dados do pagamento mudaram. Escolha a forma de pagamento novamente.')
+        payment.approved_at = now_utc()
+        enrollment.status, enrollment.activated_at = 'active', payment.approved_at
+        notify_enrollment(enrollment.id, enrollment.student_id, enrollment.course_id)
+        db.session.commit()
+        return payment_state(enrollment, payment)
+
+    @app.get('/api/v1/me/enrollments/<enrollment_id>/pix/<reference>.png')
+    @require_user('student')
+    def demo_pix_qr(enrollment_id, reference):
+        enrollment = owned_enrollment(enrollment_id)
+        payment = db.session.get(DemoPayment, enrollment.id) if enrollment else None
+        if (not payment or payment.method != 'pix' or payment.reference != reference or payment.approved_at
+                or enrollment.status == 'active' or payment.amount != enrollment.course.price
+                or enrollment.course.status != 'published'):
+            return problem(404, 'QR Code indisponível')
+        return send_file(payment_qr(payment.reference), mimetype='image/png')
+
+    @app.get('/api/v1/me/enrollments/<enrollment_id>/receipt')
+    @require_user('student')
+    def download_payment_receipt(enrollment_id):
+        enrollment = owned_enrollment(enrollment_id)
+        payment = db.session.get(DemoPayment, enrollment.id) if enrollment else None
+        if not payment or not payment.approved_at or enrollment.status != 'active':
+            return problem(404, 'Comprovante não disponível')
+        return send_file(payment_receipt(payment, g.user.name), mimetype='application/pdf', as_attachment=True,
+                         download_name=f'learnplay-comprovante-teste-{payment.reference}.pdf')
 
     @app.get('/api/v1/me/enrollments')
     @require_user()
@@ -589,7 +702,14 @@ def create_app(test_config=None):
             for course_id, lesson_id, title, saved in rows:
                 if course_id not in targets:
                     targets[course_id] = {'id': lesson_id, 'title': title, 'saved': saved is not None}
-        return jsonify(items=[{**item.public(), 'resume_lesson': targets.get(item.course_id)} for item in items])
+        paid_ids = {row.enrollment_id for row in db.session.query(DemoPayment.enrollment_id).filter(
+            DemoPayment.enrollment_id.in_([item.id for item in items if item.status == 'active']),
+            DemoPayment.approved_at.is_not(None),
+        )}
+        return jsonify(items=[{
+            **item.public(), 'resume_lesson': targets.get(item.course_id),
+            'receipt_url': url_for('download_payment_receipt', enrollment_id=item.id) if item.id in paid_ids else None,
+        } for item in items])
 
     @app.put('/api/v1/me/projects/<course_id>')
     @require_user('student')
@@ -976,6 +1096,7 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
 
         enrollment_ids = db.session.query(Enrollment.id).filter_by(student_id=user.id).subquery()
         SharedCertificate.query.filter(SharedCertificate.enrollment_id.in_(enrollment_ids.select())).delete(synchronize_session=False)
+        DemoPayment.query.filter(DemoPayment.enrollment_id.in_(enrollment_ids.select())).delete(synchronize_session=False)
         PaymentEvent.query.filter(PaymentEvent.enrollment_id.in_(enrollment_ids.select())).delete(synchronize_session=False)
         AssessmentAttempt.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         ProjectAchievement.query.filter_by(student_id=user.id).delete(synchronize_session=False)
@@ -993,43 +1114,6 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
     @require_user('admin')
     def admin_users():
         return jsonify(items=[x.public() for x in User.query.order_by(User.name).all()])
-
-    @app.post('/api/v1/integrations/payments/webhook')
-    def payment_webhook():
-        secret = os.getenv('PAYMENT_WEBHOOK_SECRET', '')
-        raw_body = request.get_data(cache=True)
-        supplied = request.headers.get('X-Webhook-Signature', '')
-        import hmac
-        expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest() if secret else ''
-        if not secret or not hmac.compare_digest(expected, supplied):
-            return problem(401, 'Assinatura do webhook inválida')
-        data = request.get_json(silent=True) or {}
-        event_id = str(data.get('event_id', ''))[:160]
-        enrollment = db.session.get(Enrollment, str(data.get('enrollment_id', '')))
-        if not event_id or not enrollment:
-            return problem(404, 'Evento ou matrícula não encontrada')
-        previous = PaymentEvent.query.filter_by(provider_event_id=event_id).first()
-        if previous:
-            return jsonify(status=previous.status, duplicate=True)
-        digest = hashlib.sha256(raw_body).hexdigest()
-        event = PaymentEvent(provider_event_id=event_id, enrollment_id=enrollment.id, payload_digest=digest, status='received')
-        db.session.add(event)
-        try:
-            amount = Decimal(str(data.get('amount', '-1'))).quantize(Decimal('0.01'))
-        except Exception:
-            amount = Decimal('-1.00')
-        if amount != enrollment.course.price or data.get('currency') != 'BRL':
-            event.status = 'review'
-            db.session.commit()
-            return problem(422, 'Valor/moeda divergente; evento enviado para revisão')
-        if data.get('status') == 'approved' and enrollment.status == 'pending_payment':
-            enrollment.status, enrollment.activated_at = 'active', now_utc()
-            db.session.add(NotificationOutbox(event_key=f'enrollment:{enrollment.id}', recipient_id=enrollment.student_id, event_type='enrollment_confirmed', payload={'course_id': enrollment.course_id}))
-        elif data.get('status') == 'failed' and enrollment.status == 'pending_payment':
-            enrollment.status = 'payment_failed'
-        event.status = 'processed'
-        db.session.commit()
-        return jsonify(status=enrollment.status, duplicate=False)
 
     return app
 

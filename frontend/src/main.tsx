@@ -3,7 +3,7 @@ import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/cl
 import { Dialog } from 'radix-ui';
 import { WeeklyMission } from './features/WeeklyMission';
 import type { U, L, A, C, E, AssessmentResult } from './model';
-import { money } from './presentation';
+import { PaymentCheckout, readPaymentEnrollment } from './features/PaymentCheckout';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, readDiscoveryPage } from './features/Discovery';
 import { hasWrittenPythonCourse, lessonModules, pythonLessonFor } from './features/pythonLessons';
@@ -22,9 +22,15 @@ import './features/trails.css';
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false } } });
 let csrf='';
 async function api<T>(path:string,init:RequestInit={},csrfRetry=false):Promise<T>{const h=new Headers(init.headers);if(init.body)h.set('Content-Type','application/json');const mutating=['POST','PUT','PATCH','DELETE'].includes((init.method||'GET').toUpperCase());if(mutating){if(!csrf)csrf=(await api<{csrf_token:string}>('/api/v1/auth/csrf')).csrf_token;h.set('X-CSRF-Token',csrf)}const r=await fetch(path,{...init,headers:h,credentials:'include'});if(r.status===204)return undefined as T;const d=await r.json().catch(()=>({}));if(!r.ok&&r.status===403&&mutating&&!csrfRetry&&/csrf/i.test(d.detail||'')){csrf='';csrf=(await api<{csrf_token:string}>('/api/v1/auth/csrf')).csrf_token;return api<T>(path,init,true)}if(!r.ok)throw Error(d.detail||`Erro ${r.status}`);return d}
+const initialView = () => readPaymentEnrollment() ? 'payment' : readDiscoveryPage();
 const cats=['Todos','Programação','Design','Tecnologia','Negócios'];
-function App(){const queryClient = useQueryClient();const[user,SUser]=useState<U|null>(null),[enrollments,SE]=useState<E[]>([]),[favorites,SFav]=useState<C[]>([]),[course,SActive]=useState<C|null>(null),[cat,SCat]=useState(''),[level,setLevel]=useState(''),[search,SS]=useState(''),[view,setView]=useState<string>(readDiscoveryPage),[selectedLesson,setSelectedLesson]=useState<string>(),[modal,SM]=useState(''),[loading,SL]=useState(true),[drawer,SD]=useState(false),[theme,STheme]=useState<'light'|'dark'>(()=>{try{return localStorage.getItem('learnplay-theme')==='dark'?'dark':'light'}catch{return'light'}});useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.classList.toggle('dark',theme==='dark');document.documentElement.style.colorScheme=theme;try{localStorage.setItem('learnplay-theme',theme)}catch{}},[theme]);const note=(message:string)=>toast(message,{duration:4500});const reduceMotion=useReducedMotion();
+function App(){const queryClient = useQueryClient();const[user,SUser]=useState<U|null>(null),[enrollments,SE]=useState<E[]>([]),[favorites,SFav]=useState<C[]>([]),[course,SActive]=useState<C|null>(null),[cat,SCat]=useState(''),[level,setLevel]=useState(''),[search,SS]=useState(''),[view,setView]=useState<string>(initialView),[selectedLesson,setSelectedLesson]=useState<string>(),[modal,SM]=useState(''),[loading,SL]=useState(true),[drawer,SD]=useState(false),[theme,STheme]=useState<'light'|'dark'>(()=>{try{return localStorage.getItem('learnplay-theme')==='dark'?'dark':'light'}catch{return'light'}});useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.classList.toggle('dark',theme==='dark');document.documentElement.style.colorScheme=theme;try{localStorage.setItem('learnplay-theme',theme)}catch{}},[theme]);const note=(message:string)=>toast(message,{duration:4500});const reduceMotion=useReducedMotion();
 function SV(next: string) {
+  if (next !== 'payment' && readPaymentEnrollment()) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    window.history.pushState(null, '', url);
+  }
   if (readDiscoveryPage() !== 'home' && next !== 'topics' && next !== 'projects' && next !== 'weekly') {
     const url = new URL(window.location.href);
     url.searchParams.delete('secao');
@@ -52,6 +58,13 @@ function goToPage(next: string) {
   }
 }
 
+function openPayment(enrollmentId: string) {
+  const url = new URL(window.location.href);
+  url.search = new URLSearchParams({ pagamento: enrollmentId }).toString();
+  window.history.pushState(null, '', url);
+  goToPage('payment');
+}
+
 function scrollToCourses() {
   const heading = document.getElementById('catalog-heading');
   heading?.focus({ preventScroll: true });
@@ -59,7 +72,7 @@ function scrollToCourses() {
 }
 
 useEffect(() => {
-  const restore = () => { SActive(null); SD(false); setView(readDiscoveryPage()); };
+  const restore = () => { SActive(null); SD(false); setView(initialView()); };
   window.addEventListener('popstate', restore);
   return () => window.removeEventListener('popstate', restore);
 }, []);
@@ -108,9 +121,10 @@ async function join(c: C, start = false) {
     const enrollment = await api<E>(`/api/v1/courses/${c.id}/enrollments`, {
       method: 'POST', headers: {'X-Idempotency-Key': crypto.randomUUID()},
     });
-    if (enrollment.status === 'pending_payment') {
-      if (!confirm(`DEMONSTRAÇÃO DE PAGAMENTO\n${c.title}\n${money(c.price)}\n\nConfirmar matrícula?`)) return;
-      await api(`/api/v1/me/enrollments/${enrollment.id}/demo-payment`, {method: 'POST'});
+    if (enrollment.status !== 'active') {
+      openPayment(enrollment.id);
+      SE(items => [enrollment, ...items.filter(item => item.id !== enrollment.id)]);
+      return;
     }
     await refresh();
     if (start) {
@@ -120,7 +134,7 @@ async function join(c: C, start = false) {
     } else {
       SActive(await api<C>(`/api/v1/courses/${c.id}`));
     }
-    note(enrollment.status === 'pending_payment' ? 'pagamento demonstrativo confirmado.' : 'matrícula confirmada.');
+    note('matrícula confirmada.');
   } catch (error) {
     note((error as Error).message);
   } finally {
@@ -128,6 +142,7 @@ async function join(c: C, start = false) {
   }
 }
 async function learn(c:C, requestedLessonId?:string){try{await pendingResume.current;const d=await api<{items:{lessons:L[]}[];progress_percent:number}>(`/api/v1/courses/${c.id}/lessons`),detail=await api<C>(`/api/v1/courses/${c.id}`),resume=await api<{lesson_id:string|null}>(`/api/v1/me/resume/${c.id}`);detail.lessons=d.items.flatMap(x=>x.lessons);detail.resume_lesson_id=requestedLessonId ?? resume.lesson_id;SActive(detail);SV('learn')}catch(e){note((e as Error).message)}}async function toggleFavorite(c:C){if(!user){SM('login');note('entre para salvar cursos favoritos.');return}if(user.role!=='student'){note('favoritos estão disponíveis para alunos.');return}const exists=favorites.some(x=>x.id===c.id);try{if(exists){await api(`/api/v1/me/favorites/${c.id}`,{method:'DELETE'});SFav(favorites.filter(x=>x.id!==c.id));note('curso removido dos favoritos.')}else{await api(`/api/v1/me/favorites/${c.id}`,{method:'POST'});SFav([c,...favorites]);note('curso salvo nos favoritos.')}}catch(e){note((e as Error).message)}}async function logout(){await pendingResume.current;await api('/api/v1/auth/logout',{method:'POST'});csrf='';SUser(null);SFav([]);SActive(null);SV('home');note('sessão encerrada')}
+const paymentEnrollmentId = view === 'payment' ? readPaymentEnrollment() : null;
 return <div className="shell"><header onKeyDown={event => {
   if (event.key === 'Escape' && drawer && !modal) {
     SD(false);
@@ -155,8 +170,13 @@ return <div className="shell"><header onKeyDown={event => {
   }}
   saveProject={async url => (await api<{project_url:string}>(`/api/v1/me/projects/${course.id}`, {
     method: 'PUT', body: JSON.stringify({url}),
-  })).project_url}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
-  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main>
+  })).project_url}/> :paymentEnrollmentId ? (user?.role === 'student'
+  ? <PaymentCheckout key={`${user.id}:${paymentEnrollmentId}`} enrollmentId={paymentEnrollmentId} userId={user.id}
+      api={api} back={()=>goToPage('mine')} approved={refresh}/>
+  : <main className="payment-page"><h1>Pagamento de teste</h1><p>Entre com uma conta de aluno para acessar sua matrícula.</p>
+      {!user && <button className="primary" onClick={()=>SM('login')}>Entrar</button>}</main>)
+  :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
+  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')} payment={openPayment}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main>
 <section className="hero explore-intro" aria-labelledby="explore-title">
   <div>
     <h1 id="explore-title">Seu próximo passo <em>começa aqui.</em></h1>
