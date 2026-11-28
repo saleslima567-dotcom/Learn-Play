@@ -4,7 +4,7 @@ import { Dialog } from 'radix-ui';
 import type { U, L, A, C, E } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
-import { hasTaskProject, practiceSteps } from './features/coursePractice';
+import { hasTaskProject, courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
 import { Toaster, toast } from 'sonner';
@@ -55,7 +55,7 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
 function Learn({course,remember,back,done,quiz}:{course:C;remember:(courseId:string,lesson:L)=>void;back:()=>void;done:(l:L)=>void;quiz:(a:A,x:Record<string,number>)=>void}){const lessons=course.lessons ?? [];
 const [selectedId,selectLesson]=useState(() => course.resume_lesson_id ?? lessons.find(lesson=>!lesson.completed)?.id ?? lessons[0]?.id);
 const selected=lessons.find(lesson=>lesson.id===selectedId) ?? lessons.find(lesson=>!lesson.completed) ?? lessons[0];
-const mission=selected ? practiceSteps(course)[selected.title] : undefined;
+const mission=selected ? courseGuide(course)?.steps[selected.title] : undefined;
 const [q,SQ]=useState(false),[answers,SA]=useState<Record<string,number>>({});useEffect(()=>{
   if(selected) remember(course.id, selected);
 },[course.id,selected?.id,remember]);return <main className="learning"><div className="learnhead"><button className="back" onClick={back}>← meus cursos</button>　{course.title}</div><div className="learnlayout"><aside><b>CONTEÚDO DO CURSO</b>{course.lessons?.map((l,i)=><button className={selected?.id===l.id&&!q?'chosen':''} key={l.id} onClick={()=>{selectLesson(l.id);SQ(false)}}>{l.completed?'✓':String(i+1).padStart(2,'0')}　{l.title}</button>)}{course.assessment&&<button onClick={()=>SQ(true)}>◎　{course.assessment.title}</button>}</aside><section>{q&&course.assessment?<div className="quiz"><small className="eyebrow">fixe o que aprendeu</small><h2>{course.assessment.title}</h2>{course.assessment.questions.map((x,i)=><fieldset key={x.id}><legend>{i+1}. {x.prompt}</legend>{x.options.map((o,j)=><label key={j}><input type="radio" name={x.id} checked={answers[x.id]===j} onChange={()=>SA({...answers,[x.id]:j})}/>{o}</label>)}</fieldset>)}<button className="primary" disabled={Object.keys(answers).length!==course.assessment.questions.length} onClick={()=>quiz(course.assessment!,answers)}>enviar respostas</button></div>:selected&&<><div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div><small className="eyebrow">aula {String((course.lessons||[]).indexOf(selected)+1).padStart(2,'0')}</small><h2>{selected.title}</h2><p>{selected.description}</p>

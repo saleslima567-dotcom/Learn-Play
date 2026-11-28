@@ -59,10 +59,67 @@ const gitSteps: PracticeSteps = {
   },
 };
 
-export function practiceSteps(course: C): PracticeSteps {
-  if (hasTaskProject(course)) return pythonSteps;
-  if (course.category === 'Tecnologia' && course.title === 'Git e GitHub para equipes') return gitSteps;
-  return {};
+const designSteps: PracticeSteps = {
+  'Princípios de UX': {
+    mission: 'Desenhe um formulário de inscrição para uma oficina. Inclua nome, e-mail e um botão de envio. Peça a alguém que aponte por onde começaria e o que espera que aconteça ao enviar.',
+    check: 'Anote uma dúvida observada no teste, ajuste o esboço e confira se a pessoa consegue explicar o próximo passo.',
+    minutes: 15,
+  },
+  'Tipografia e cor': {
+    mission: 'Refine o esboço: dê destaque ao título, mantenha um rótulo visível acima de cada campo e escreva uma instrução curta para o e-mail. Defina como distinguir um erro mesmo sem enxergar sua cor.',
+    check: 'Veja o formulário em escala de cinza. O rótulo continua legível e a mensagem explica como corrigir o e-mail.',
+    minutes: 15,
+  },
+  'Componentes e estados': {
+    mission: 'Monte três telas do formulário: pronto para preencher, e-mail inválido e inscrição confirmada. Preserve o nome digitado na tela de erro e mostre o que acontece depois da confirmação.',
+    check: 'Peça a alguém que simule o envio com e-mail inválido, corrija o campo e identifique a confirmação usando apenas suas telas.',
+    minutes: 20,
+  },
+};
+
+const communicationSteps: PracticeSteps = {
+  'Comunicação clara': {
+    mission: 'Imagine que uma equipe precisa adiar a entrega de sexta para segunda. Escreva um aviso de até quatro frases com a mudança, o motivo e o que cada pessoa precisa fazer agora.',
+    check: 'Peça a um colega que leia o aviso e diga o novo prazo e a próxima ação. Revise o trecho que gerou dúvida.',
+    minutes: 10,
+  },
+  'Feedback que desenvolve': {
+    mission: 'No mesmo cenário, uma revisão chegou depois do combinado. Escreva um feedback privado que descreva o ocorrido, explique o impacto na equipe e abra espaço para ouvir a outra pessoa.',
+    check: 'Sublinhe o fato observável, o impacto e a pergunta final. Reescreva qualquer frase que atribua uma intenção sem evidência.',
+    minutes: 15,
+  },
+  'Plano de ação': {
+    mission: 'Transforme o feedback em um plano de duas ações para a próxima entrega. Para cada ação, registre um responsável, uma data e uma evidência de conclusão.',
+    check: 'Leia o plano como se fosse outra pessoa da equipe. Você consegue apontar quem fará o quê, até quando e como confirmar que foi feito?',
+    minutes: 15,
+  },
+};
+
+type CourseGuide = { steps: PracticeSteps; preparation: string };
+
+const pythonGuide: CourseGuide = {
+  steps: pythonSteps,
+  preparation: 'Você pode começar do zero. Separe um editor de texto e um ambiente com Python 3, local ou online, em que possa criar e executar o arquivo tarefas.py.',
+};
+
+const courseGuides = new Map<string, CourseGuide>([
+  ['Tecnologia/Git e GitHub para equipes', {
+    steps: gitSteps,
+    preparation: 'Tenha o Git instalado e uma conta no GitHub com permissão para criar um repositório de treino. Confira a instalação com git --version e saiba abrir o terminal na pasta do projeto.',
+  }],
+  ['Design/Design de interfaces digitais', {
+    steps: designSteps,
+    preparation: 'Você vai usar campos de texto, rótulos e botões. Separe papel e caneta ou um editor de protótipos e combine um teste curto com alguém que possa experimentar o formulário.',
+  }],
+  ['Negócios/Comunicação e liderança', {
+    steps: communicationSteps,
+    preparation: 'Você pode usar o cenário fictício das aulas. Separe um editor de texto ou caderno e convide alguém para ler seu aviso e dizer o que entendeu.',
+  }],
+]);
+
+export function courseGuide(course: C) {
+  if (hasTaskProject(course)) return pythonGuide;
+  return courseGuides.get(`${course.category}/${course.title}`);
 }
 
 export function normalizeSearch(value: string) {
