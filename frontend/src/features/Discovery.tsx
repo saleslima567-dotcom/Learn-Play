@@ -10,13 +10,13 @@ export const weeklyUrl = '/?secao=missao';
 
 const topics = [
   { id: 'python', name: 'Python', description: 'Use listas, condições e laços para escrever seus primeiros programas.',
-    project: 'Crie uma lista de tarefas', deliverable: 'Um programa de terminal que adiciona tarefas, lista os itens e marca o que já foi feito.' },
+    project: 'Crie uma lista de tarefas', deliverable: 'Monte uma lista que roda no terminal. Você pode adicionar tarefas e marcar as que já terminou.' },
   { id: 'git', name: 'Git e GitHub', description: 'Registre mudanças, trabalhe em uma branch e revise seu código antes de integrá-lo.',
-    project: 'Abra seu primeiro pull request', deliverable: 'Um pull request integrado no seu repositório de treino, com uma seção de uso no README.' },
+    project: 'Abra seu primeiro pull request', deliverable: 'Adicione instruções ao README do seu repositório de treino. Depois, revise e integre a alteração com um pull request.' },
   { id: 'design', name: 'Design de interfaces', description: 'Desenhe campos, rótulos e estados que ajudam as pessoas a preencher um formulário.',
-    project: 'Prototipe um formulário de inscrição', deliverable: 'Três telas do formulário: preenchimento, erro de e-mail e inscrição confirmada.' },
+    project: 'Prototipe um formulário de inscrição', deliverable: 'Desenhe uma inscrição para uma oficina e mostre como a tela responde quando o e-mail está errado ou o envio dá certo.' },
   { id: 'comunicacao', name: 'Comunicação de equipe', description: 'Alinhe prazos, dê feedback e transforme acordos em ações com responsáveis.',
-    project: 'Escreva um feedback e um plano de ação', deliverable: 'Um feedback escrito e um plano de duas ações com responsáveis, datas e critérios de conclusão.' },
+    project: 'Escreva um feedback e um plano de ação', deliverable: 'Escreva o que você diria depois de um atraso e combine duas ações para a equipe cumprir na próxima entrega.' },
 ] as const satisfies ReadonlyArray<{ id: TopicId; name: string; description: string; project: string; deliverable: string }>;
 
 export function readDiscoveryPage() {
