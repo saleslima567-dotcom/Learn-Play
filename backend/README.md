@@ -6,4 +6,4 @@ Flask REST API em `backend/learnplay/app.py`; sessão de servidor persistida no 
 `python wsgi.py` (na pasta backend)
 `python -m pytest -q`
 
-O gateway de pagamento, mídia S3 e envio de e-mail são adaptadores demonstrativos. O webhook requer `PAYMENT_WEBHOOK_SECRET`; notificações são processadas pelo worker e registradas como `sent_demo`.
+O checkout de demonstração processa Pix, crédito e débito simulados localmente, sem credenciais de pagamento. Notificações são processadas pelo worker e registradas como `sent_demo`.

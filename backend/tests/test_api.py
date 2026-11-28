@@ -1,9 +1,6 @@
 # Python / backend/tests/test_api.py / Python 3.12 + pytest / LearnPlay API behavior
 import pytest
-import hashlib
-import hmac
-import json
-from learnplay.app import create_app, db, User, Course, Section, Lesson, Enrollment, LessonCompletion, Assessment, AssessmentQuestion, seed_demo_data
+from learnplay.app import create_app, db, User, Course, Section, Lesson, Enrollment, LessonCompletion, Assessment, AssessmentQuestion, NotificationOutbox, seed_demo_data
 
 
 @pytest.fixture()
@@ -131,17 +128,48 @@ def test_dashboard_resume_uses_the_students_published_lesson(client):
     assert target() is None
 
 
-def test_paid_enrollment_requires_demo_confirmation(client):
+@pytest.mark.parametrize('method', ['pix', 'credit', 'debit'])
+def test_paid_enrollment_requires_demo_confirmation(client, method):
     token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
+    headers = {'X-CSRF-Token': token}
     course = next(x for x in client.get('/api/v1/courses').json['items'] if x['price'] > 0)
-    response = client.post(f"/api/v1/courses/{course['id']}/enrollments", headers={'X-CSRF-Token': token})
+    response = client.post(f"/api/v1/courses/{course['id']}/enrollments", headers=headers)
+    enrollment_id = response.json['id']
+    path = f'/api/v1/me/enrollments/{enrollment_id}'
     assert response.status_code == 202
     assert response.json['status'] == 'pending_payment'
-    lesson_response = client.get(f"/api/v1/courses/{course['id']}/lessons")
-    assert lesson_response.status_code == 403
-    approved = client.post(f"/api/v1/me/enrollments/{response.json['id']}/demo-payment", headers={'X-CSRF-Token': token})
-    assert approved.json['status'] == 'active'
+    assert client.get(f'{path}/receipt').status_code == 404
+    assert client.get(f"/api/v1/courses/{course['id']}/lessons").status_code == 403
+    assert client.post(f'{path}/demo-payment', headers=headers).status_code == 404
+    assert client.post('/api/v1/integrations/payments/webhook', headers=headers).status_code == 404
+
+    assert client.post(f'{path}/payment', json={'method': []}, headers=headers).status_code == 422
+    first = client.post(f'{path}/payment', json={'method': 'pix'}, headers=headers).json
+    assert client.get(first['qr_url']).data.startswith(b'\x89PNG\r\n\x1a\n')
+    prepared = client.post(f'{path}/payment', json={'method': method, 'amount': 0}, headers=headers)
+    assert prepared.json['method'] == method
+    assert prepared.json['amount'] == course['price']
+    assert 'reference' in prepared.json
+    reference = prepared.json['reference']
+    assert client.get(f'{path}/payment').json['reference'] == reference
+    assert client.get(f"/api/v1/courses/{course['id']}/lessons").status_code == 403
+    if method != 'pix':
+        assert client.get(first['qr_url']).status_code == 404
+        assert client.post(f'{path}/payment/approve', json={'reference': first['reference']},
+                           headers=headers).status_code == 409
+    assert client.post(f'{path}/payment/approve', json={'reference': reference}).status_code == 403
+    approved = client.post(f'{path}/payment/approve', json={'reference': reference}, headers=headers)
+    assert approved.json['enrollment_status'] == 'active'
+    assert client.post(f'{path}/payment/approve', json={'reference': reference}, headers=headers).json == approved.json
     assert client.get(f"/api/v1/courses/{course['id']}/lessons").status_code == 200
+    assert not approved.json['qr_url']
+    receipt = client.get(approved.json['receipt_url'])
+    assert receipt.mimetype == 'application/pdf'
+    assert 'attachment;' in receipt.headers['Content-Disposition']
+    assert receipt.data.startswith(b'%PDF-')
+    assert client.get('/api/v1/me/enrollments').json['items'][0]['receipt_url'] == approved.json['receipt_url']
+    with client.application.app_context():
+        assert NotificationOutbox.query.filter_by(event_key=f'enrollment:{enrollment_id}').count() == 1
 
 
 def test_instructor_can_create_course_and_student_cannot(client):
@@ -235,20 +263,25 @@ def test_project_achievement_requires_completion_and_remains_private(client):
     assert other.put(path, json={'url': url}, headers={'X-CSRF-Token': instructor}).status_code == 403
 
 
-def test_payment_webhook_signature_and_duplicate_event_are_idempotent(client, monkeypatch):
-    monkeypatch.setenv('PAYMENT_WEBHOOK_SECRET', 'test-webhook-secret')
+def test_demo_payment_and_receipt_belong_to_enrolled_student(client):
     token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
+    headers = {'X-CSRF-Token': token}
     course = next(x for x in client.get('/api/v1/courses').json['items'] if x['price'] > 0)
-    pending = client.post(f"/api/v1/courses/{course['id']}/enrollments", headers={'X-CSRF-Token': token})
-    payload = {'event_id': 'evt-test-001', 'enrollment_id': pending.json['id'], 'status': 'approved', 'amount': course['price'], 'currency': 'BRL'}
-    body = json.dumps(payload, separators=(',', ':')).encode()
-    signature = hmac.new(b'test-webhook-secret', body, hashlib.sha256).hexdigest()
-    path = '/api/v1/integrations/payments/webhook'
-    first = client.post(path, data=body, content_type='application/json', headers={'X-Webhook-Signature': signature})
-    duplicate = client.post(path, data=body, content_type='application/json', headers={'X-Webhook-Signature': signature})
-    assert first.status_code == 200 and first.json['status'] == 'active'
-    assert duplicate.status_code == 200 and duplicate.json['duplicate'] is True
+    pending = client.post(f"/api/v1/courses/{course['id']}/enrollments", headers=headers)
+    path = f"/api/v1/me/enrollments/{pending.json['id']}"
+    payment = client.post(f'{path}/payment', json={'method': 'pix'}, headers=headers).json
 
+    other = client.application.test_client()
+    registered = other.post('/api/v1/auth/register', headers={'X-CSRF-Token': csrf(other)},
+                            json={'name': 'Outro aluno', 'email': 'outro@example.test', 'password': 'Teste12345!'})
+    other_headers = {'X-CSRF-Token': registered.json['csrf_token']}
+    assert other.get(f'{path}/payment').status_code == 404
+    assert other.get(payment['qr_url']).status_code == 404
+    assert other.post(f'{path}/payment/approve', json={'reference': payment['reference']},
+                      headers=other_headers).status_code == 404
+
+    client.post(f'{path}/payment/approve', json={'reference': payment['reference']}, headers=headers)
+    assert other.get(f'{path}/receipt').status_code == 404
 
 
 def test_instructor_can_author_lessons_assessment_and_publish(client):

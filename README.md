@@ -25,6 +25,10 @@ O projeto inclui uma **SPA em React** e uma **API REST em Flask**, com persistê
 
 > **Importante:** o projeto é uma demonstração funcional, não um serviço comercial. O pagamento, o player de vídeo e o envio de notificações externas são simulados. Nenhuma cobrança real é processada.
 
+### Pagamento de teste
+
+Nos cursos pagos, o aluno cria uma matrícula pendente, escolhe Pix, cartão de crédito ou cartão de débito e confirma a simulação. O QR Code do Pix contém apenas um identificador de teste do LearnPlay. O checkout não solicita dados bancários ou de cartão. Após a confirmação, as aulas ficam disponíveis e o comprovante em PDF pode ser baixado na tela de confirmação ou em **Meus cursos**. Os cursos gratuitos mantêm matrícula imediata.
+
 ## Funcionalidades
 
 | Perfil | Recursos disponíveis |
