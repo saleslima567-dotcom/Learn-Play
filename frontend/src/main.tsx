@@ -38,6 +38,8 @@ useEffect(() => {
 const courseQuery=useQuery({queryKey:['catalog','courses',user?.id??'public'],queryFn:async()=> (await api<{items:C[]}>('/api/v1/courses')).items});const courses=courseQuery.data??[];
 async function refresh(){await queryClient.invalidateQueries({queryKey:['catalog','courses']});if(user)SE((await api<{items:E[]}>('/api/v1/me/enrollments')).items)}useEffect(()=>{void(async()=>{try{csrf=(await api<{csrf_token:string}>('/api/v1/auth/csrf')).csrf_token;const me=await api<{user:U}>('/api/v1/me').catch(()=>null);if(me)SUser(me.user);await queryClient.invalidateQueries({queryKey:['catalog','courses']})}catch(e){note((e as Error).message)}finally{SL(false)}})()},[]);useEffect(()=>{if(user){void api<{items:E[]}>('/api/v1/me/enrollments').then(x=>SE(x.items)).catch(e=>note(e.message));if(user.role==='student')void api<{items:C[]}>('/api/v1/me/favorites').then(x=>SFav(x.items)).catch(e=>note(e.message));else SFav([])}else{SE([]);SFav([])}},[user]);
 const pendingResume = React.useRef(Promise.resolve());
+const startAfterAuth = React.useRef<C | null>(null);
+const enrolling = React.useRef(false);
 const rememberLesson = React.useCallback((courseId: string, lesson: L) => {
   SE(items => items.map(item => item.course_id === courseId
     ? {...item, resume_lesson: {id: lesson.id, title: lesson.title, saved: true}} : item));
@@ -46,9 +48,60 @@ const rememberLesson = React.useCallback((courseId: string, lesson: L) => {
   }).catch(() => { toast('Não foi possível salvar a aula para a próxima sessão.'); });
 }, []);
 const projectCourse = courses.find(hasTaskProject);
+const [showPreview,setShowPreview] = useState(false);
 useScrollReveal(`${loading}:${view}:${course?.id ?? ''}`);
-async function open(id:string, lesson?:string){try{const detail=await api<C>(`/api/v1/courses/${id}`);
-  setSelectedLesson(lesson);SActive(detail);if(view==='learn')SV('home');scrollTo(0,0)}catch(e){note((e as Error).message)}}async function auth(email:string,password:string,name?:string){const d=await api<{user:U;csrf_token:string}>(name?'/api/v1/auth/register':'/api/v1/auth/login',{method:'POST',body:JSON.stringify({email,password,...(name?{name}:{})})});csrf=d.csrf_token;SUser(d.user);SD(false);SM('');note(`bem-vindo, ${d.user.name.split(' ')[0]}!`)}async function join(c:C){if(!user){SM('login');return}try{const e=await api<E>(`/api/v1/courses/${c.id}/enrollments`,{method:'POST',headers:{'X-Idempotency-Key':crypto.randomUUID()}});if(e.status==='pending_payment'){if(!confirm(`DEMONSTRAÇÃO DE PAGAMENTO\n${c.title}\n${money(c.price)}\n\nConfirmar matrícula?`))return;await api(`/api/v1/me/enrollments/${e.id}/demo-payment`,{method:'POST'})}await refresh();SActive(await api<C>(`/api/v1/courses/${c.id}`));note(e.status==='active'?'matrícula confirmada.':'pagamento demonstrativo confirmado.')}catch(x){note((x as Error).message)}}async function learn(c:C, requestedLessonId?:string){try{await pendingResume.current;const d=await api<{items:{lessons:L[]}[];progress_percent:number}>(`/api/v1/courses/${c.id}/lessons`),detail=await api<C>(`/api/v1/courses/${c.id}`),resume=await api<{lesson_id:string|null}>(`/api/v1/me/resume/${c.id}`);detail.lessons=d.items.flatMap(x=>x.lessons);detail.resume_lesson_id=requestedLessonId ?? resume.lesson_id;SActive(detail);SV('learn')}catch(e){note((e as Error).message)}}async function toggleFavorite(c:C){if(!user){SM('login');note('entre para salvar cursos favoritos.');return}if(user.role!=='student'){note('favoritos estão disponíveis para alunos.');return}const exists=favorites.some(x=>x.id===c.id);try{if(exists){await api(`/api/v1/me/favorites/${c.id}`,{method:'DELETE'});SFav(favorites.filter(x=>x.id!==c.id));note('curso removido dos favoritos.')}else{await api(`/api/v1/me/favorites/${c.id}`,{method:'POST'});SFav([c,...favorites]);note('curso salvo nos favoritos.')}}catch(e){note((e as Error).message)}}async function logout(){await pendingResume.current;await api('/api/v1/auth/logout',{method:'POST'});csrf='';SUser(null);SFav([]);SActive(null);SV('home');note('sessão encerrada')}
+async function open(id:string, lesson?:string, preview = false){try{const detail=await api<C>(`/api/v1/courses/${id}`);
+  setSelectedLesson(lesson);setShowPreview(preview);SActive(detail);if(view==='learn')SV('home');scrollTo(0,0)}catch(e){note((e as Error).message)}}async function auth(email: string, password: string, name?: string) {
+  const d = await api<{user: U; csrf_token: string}>(name ? '/api/v1/auth/register' : '/api/v1/auth/login', {
+    method: 'POST', body: JSON.stringify({email, password, ...(name ? {name} : {})}),
+  });
+  csrf = d.csrf_token;
+  const pending = startAfterAuth.current;
+  startAfterAuth.current = null;
+  SUser(d.user);
+  SD(false);
+  SM('');
+  note(`bem-vindo, ${d.user.name.split(' ')[0]}!`);
+  if (pending && d.user.role === 'student') await join(pending, true);
+  else if (pending) note('Entre com uma conta de aluno para iniciar a trilha.');
+}
+
+function startCourse(c: C) {
+  if (user) {
+    void join(c, true);
+  } else {
+    startAfterAuth.current = c;
+    SM('login');
+  }
+}
+
+async function join(c: C, start = false) {
+  if (enrolling.current) return;
+  enrolling.current = true;
+  try {
+    const enrollment = await api<E>(`/api/v1/courses/${c.id}/enrollments`, {
+      method: 'POST', headers: {'X-Idempotency-Key': crypto.randomUUID()},
+    });
+    if (enrollment.status === 'pending_payment') {
+      if (!confirm(`DEMONSTRAÇÃO DE PAGAMENTO\n${c.title}\n${money(c.price)}\n\nConfirmar matrícula?`)) return;
+      await api(`/api/v1/me/enrollments/${enrollment.id}/demo-payment`, {method: 'POST'});
+    }
+    await refresh();
+    if (start) {
+      const current = await api<{items: E[]}>('/api/v1/me/enrollments');
+      SE(current.items);
+      await learn(c, c.lessons?.[0]?.id);
+    } else {
+      SActive(await api<C>(`/api/v1/courses/${c.id}`));
+    }
+    note(enrollment.status === 'pending_payment' ? 'pagamento demonstrativo confirmado.' : 'matrícula confirmada.');
+  } catch (error) {
+    note((error as Error).message);
+  } finally {
+    enrolling.current = false;
+  }
+}
+async function learn(c:C, requestedLessonId?:string){try{await pendingResume.current;const d=await api<{items:{lessons:L[]}[];progress_percent:number}>(`/api/v1/courses/${c.id}/lessons`),detail=await api<C>(`/api/v1/courses/${c.id}`),resume=await api<{lesson_id:string|null}>(`/api/v1/me/resume/${c.id}`);detail.lessons=d.items.flatMap(x=>x.lessons);detail.resume_lesson_id=requestedLessonId ?? resume.lesson_id;SActive(detail);SV('learn')}catch(e){note((e as Error).message)}}async function toggleFavorite(c:C){if(!user){SM('login');note('entre para salvar cursos favoritos.');return}if(user.role!=='student'){note('favoritos estão disponíveis para alunos.');return}const exists=favorites.some(x=>x.id===c.id);try{if(exists){await api(`/api/v1/me/favorites/${c.id}`,{method:'DELETE'});SFav(favorites.filter(x=>x.id!==c.id));note('curso removido dos favoritos.')}else{await api(`/api/v1/me/favorites/${c.id}`,{method:'POST'});SFav([c,...favorites]);note('curso salvo nos favoritos.')}}catch(e){note((e as Error).message)}}async function logout(){await pendingResume.current;await api('/api/v1/auth/logout',{method:'POST'});csrf='';SUser(null);SFav([]);SActive(null);SV('home');note('sessão encerrada')}
 return <div className="shell"><header><button className="brand" onClick={()=>{SActive(null);SV('home')}}><i><GraduationCap size={19}/></i>LearnPlay</button><nav id="primary-navigation" aria-label="Navegação principal" className={drawer?'show':''} onClick={()=>SD(false)}><button onClick={()=>{SActive(null);SV('home')}}>explorar</button>
 <a href={projectsUrl} aria-current={view==='projects'&&!course?'page':undefined}>Projetos</a>
 <a href={topicsUrl} aria-current={view==='topics'&&!course?'page':undefined}>Temas</a>
@@ -56,7 +109,7 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
   event.stopPropagation();
   SM('login');
 }}>Entrar</button>}{user&&<button onClick={()=>{SV('mine');SActive(null)}}>meus cursos</button>}{user?.role==='student'&&<button onClick={()=>{SV('favorites');SActive(null)}}>favoritos</button>}{user?.role==='instructor'&&<button onClick={()=>{SV('teacher');SActive(null)}}>ensinar</button>}{user?.role==='admin'&&<button onClick={()=>{SV('admin');SActive(null)}}>administração</button>}</nav><div className="headright"><button className="icon theme-toggle" onClick={()=>STheme(theme==='dark'?'light':'dark')} title={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'} aria-label={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}</button><button className="searchicon" aria-label="Buscar cursos" onClick={()=>{SActive(null);SV('home');requestAnimationFrame(()=>document.getElementById('search')?.focus())}}><Search size={18}/></button>{user?<><span className="hello">{user.name.split(' ')[0]}</span><button className="icon" onClick={()=>void logout()} title="sair"><LogOut size={16}/></button></>:<><button className="plain" onClick={()=>SM('login')}>entrar</button><button className="primary tiny" onClick={()=>SM('register')}>criar conta <ArrowRight size={14}/></button></>}</div><button className="hamb" type="button" aria-label={drawer?'Fechar menu':'Abrir menu'} aria-expanded={drawer} aria-controls="primary-navigation" onClick={()=>SD(!drawer)}>☰</button></header><Toaster theme={theme} position="top-right" closeButton visibleToasts={3} duration={4500} toastOptions={{className:'learnplay-toast'}} />
-<motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={async(a,answers)=>{try{const r=await api<{score:number;passed:boolean;best_score:number}>(`/api/v1/courses/${course.id}/assessments/${a.id}/attempts`,{method:'POST',body:JSON.stringify({answers})});note(`nota: ${r.score}%. ${r.passed?'avaliação aprovada!':`melhor nota ${r.best_score}%.`}`)}catch(e){note((e as Error).message)}}}/>:course?<Detail c={course} selectedLesson={selectedLesson} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
+<motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={async(a,answers)=>{try{const r=await api<{score:number;passed:boolean;best_score:number}>(`/api/v1/courses/${course.id}/assessments/${a.id}/attempts`,{method:'POST',body:JSON.stringify({answers})});note(`nota: ${r.score}%. ${r.passed?'avaliação aprovada!':`melhor nota ${r.best_score}%.`}`)}catch(e){note((e as Error).message)}}}/>:course?<Detail c={course} selectedLesson={selectedLesson} showPreview={showPreview} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='mine'?<Mine items={enrollments} open={learn} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main><section className="hero trail-hero">
   <div><small className="eyebrow">Catálogo LearnPlay</small>
     <h1>O que você quer <em>aprender?</em></h1>
@@ -66,13 +119,13 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
   {projectCourse && <article className="project-spotlight">
     <small>PROJETO EM PYTHON</small><h2>Crie sua lista de tarefas</h2>
     <pre aria-label="Exemplo em Python"><code>{'tarefas = ["Estudar Python"]\nfor tarefa in tarefas:\n    print(tarefa)'}</code></pre>
-    <button onClick={()=>void open(projectCourse.id)}>Experimentar a prévia <ArrowRight size={16}/></button>
+    <button onClick={()=>void open(projectCourse.id, undefined, true)}>Experimentar a prévia <ArrowRight size={16}/></button>
   </article>}
 </section>
 <CourseExplorer courses={courses} favorites={favorites} enrollments={enrollments} category={cat} level={level} search={search}
   setCategory={SCat} setLevel={setLevel} setSearch={SS} open={open} learn={learn} toggle={toggleFavorite}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>
-<section className="banner" data-reveal><i><GraduationCap/></i><div><b>ensina algo que você domina?</b><small>compartilhe sua experiência com quem quer aprender.</small></div><button onClick={()=>user?.role==='instructor'?SV('teacher'):SM('register')}>conheça a área de ensino　→</button></section></main><footer><b className="footbrand">▣ LearnPlay</b><small>© 2026 LearnPlay · aprender abre caminhos</small><div className="footer-links"><button onClick={()=>{SActive(null);SV('home')}}>cursos</button><button onClick={()=>SV('about')}>sobre</button><button onClick={()=>SV('help')}>ajuda</button></div></footer></>}</motion.div>{modal&&<Auth mode={modal} close={()=>SM('')} submit={auth} setMode={SM}/>}</div>}
+<section className="banner" data-reveal><i><GraduationCap/></i><div><b>ensina algo que você domina?</b><small>compartilhe sua experiência com quem quer aprender.</small></div><button onClick={()=>user?.role==='instructor'?SV('teacher'):SM('register')}>conheça a área de ensino　→</button></section></main><footer><b className="footbrand">▣ LearnPlay</b><small>© 2026 LearnPlay · aprender abre caminhos</small><div className="footer-links"><button onClick={()=>{SActive(null);SV('home')}}>cursos</button><button onClick={()=>SV('about')}>sobre</button><button onClick={()=>SV('help')}>ajuda</button></div></footer></>}</motion.div>{modal&&<Auth mode={modal} close={()=>{startAfterAuth.current=null;SM('')}} submit={auth} setMode={SM}/>}</div>}
 function Learn({course,remember,back,done,quiz}:{course:C;remember:(courseId:string,lesson:L)=>void;back:()=>void;done:(l:L)=>void;quiz:(a:A,x:Record<string,number>)=>void}){const lessons=course.lessons ?? [];
 const [selectedId,selectLesson]=useState(() => course.resume_lesson_id ?? lessons.find(lesson=>!lesson.completed)?.id ?? lessons[0]?.id);
 const selected=lessons.find(lesson=>lesson.id===selectedId) ?? lessons.find(lesson=>!lesson.completed) ?? lessons[0];

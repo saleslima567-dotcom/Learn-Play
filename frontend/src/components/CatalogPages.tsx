@@ -2,8 +2,8 @@
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'lucide-react';
 import type { C, E, U } from '../model';
 import { glyph, money } from '../presentation';
-import { hasTaskProject, lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
-import { TaskPreview } from '../features/TaskPreview';
+import { lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
+import { ProjectPreview } from '../features/ProjectPreview';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 
 const StudyProgress = lazy(() => import('../features/StudyProgress').then(module => ({ default: module.StudyProgress })));
@@ -11,17 +11,16 @@ const StudyProgress = lazy(() => import('../features/StudyProgress').then(module
 export function InfoPage({type,back}:{type:'about'|'help';back:()=>void}){const about=type==='about',cards=about?[['Cursos práticos','Conteúdo organizado em aulas e avaliações para acompanhar seu aprendizado.'],['Para aprender e ensinar','A plataforma demonstra áreas para alunos, professores e administração.'],['Protótipo acadêmico','Matrícula paga, player e notificações são demonstrativos; não há cobrança nem transmissão de vídeo.']]:[['Como começo um curso?','Abra um curso no catálogo, faça login ou crie sua conta e solicite a matrícula.'],['Como concluo as aulas?','Entre em “meus cursos”, abra a aula e marque-a como concluída. O progresso é atualizado pela plataforma.'],['Como obtenho o certificado?','Depois de concluir todas as aulas de um curso, abra os detalhes e use “emitir certificado”. A página permite imprimir ou salvar como PDF.'],['Há pagamentos ou vídeos reais?','Não neste protótipo. A confirmação de pagamento é simulada e o player apenas ilustra a tela da aula.']];return <main className="dash info-page"><button className="back" onClick={back}>← voltar ao catálogo</button><small className="eyebrow">{about?'sobre a LearnPlay':'central de ajuda'}</small><h1>{about?<>Aprender <em>abre caminhos.</em></>:<>Como podemos <em>ajudar?</em></>}</h1><p>{about?'Uma demonstração de plataforma de cursos online, com catálogo, matrícula, acompanhamento de aulas e avaliações.':'Respostas sobre os fluxos disponíveis e os limites desta demonstração.'}</p><div className="info-grid">{cards.map(([title,body])=><article className="info-card" key={title}><span>✦</span><h2>{title}</h2><p>{body}</p></article>)}</div><button className="primary" onClick={back}>explorar cursos　→</button></main>}
 type DetailProps = {
   c: C; user: U | null; enrollment?: E; back: () => void;
-  join: () => void; learn: () => void; login: () => void; selectedLesson?: string;
+  join: () => void; learn: () => void; login: () => void; start: () => void; showPreview: boolean; selectedLesson?: string;
 };
 
-export function Detail({ c, user, enrollment, back, join, learn, login, selectedLesson }: DetailProps) {
+export function Detail({ c, user, enrollment, back, join, learn, login, start, showPreview, selectedLesson }: DetailProps) {
   const lessons = c.lessons ?? [];
   const highlightedLesson = useRef<HTMLLIElement>(null);
   const selectedIndex = selectedLesson ? lessons.findIndex(lesson => lesson.title === selectedLesson) : -1;
   useEffect(() => {
     if (selectedIndex >= 0) highlightedLesson.current?.focus();
   }, [c.id, selectedIndex]);
-  const project = hasTaskProject(c);
   const guide = courseGuide(c);
   const steps = guide?.steps ?? {};
   const practiceMinutes = practiceTime(c);
@@ -37,8 +36,21 @@ export function Detail({ c, user, enrollment, back, join, learn, login, selected
       {levelGuides[c.level] && <p><strong>Para quem é</strong> · {levelGuides[c.level]}</p>}
       {guide && <section aria-labelledby="course-prerequisites">
         <h2 id="course-prerequisites">Pré-requisitos</h2><p>{guide.preparation}</p>
+        <a className="discovery-link" href="#revisao-inicial" onClick={event => {
+          event.preventDefault();
+          const review = document.querySelector<HTMLDetailsElement>('#revisao-inicial');
+          if (review) {
+            review.open = true;
+            review.querySelector('summary')?.focus();
+          }
+        }}>Revisar antes de começar</a>
+        <details className="project-demo" id="revisao-inicial">
+          <summary>{guide.review.title}</summary><p>{guide.review.text}</p>
+        </details>
       </section>}
-      {project && <TaskPreview/>}
+      {guide && <details className="project-demo" open={showPreview || undefined}>
+        <summary>Experimentar a prévia</summary><ProjectPreview topic={guide.topic}/>
+      </details>}
       <h2>Etapas da trilha</h2>
       <ol className="trail-outline">{lessons.map((lesson, index) => <li key={lesson.id}
         ref={index === selectedIndex ? highlightedLesson : undefined}
@@ -51,6 +63,8 @@ export function Detail({ c, user, enrollment, back, join, learn, login, selected
       <div className={`thumb ${c.cover_color}`}>{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
       <button className="primary wide" onClick={active ? learn : user ? join : login}>
         {finished ? 'Revisar aulas' : active ? 'Abrir sala de aula' : 'Matricular-se'} <ArrowRight size={16}/></button>
+      {!active && c.lesson_count > 0 && (!user || user.role === 'student') && <button
+        className="back first-lesson-action" onClick={start}>Começar primeira aula</button>}
       <small className="secure"><ShieldCheck size={13}/> {active ? 'Matrícula ativa' : 'Acesso após confirmação'}</small>
       <hr/><b>Esta trilha inclui</b><p>{c.lesson_count} aulas demonstrativas</p>
       {c.assessment && <p>Avaliação de conhecimentos</p>}<p>Certificado imprimível após a conclusão</p>

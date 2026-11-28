@@ -85,3 +85,8 @@ header nav a:hover, header nav a[aria-current] { color: var(--purple); text-deco
   .discovery-grid { grid-template-columns: minmax(0,1fr); }
   header nav a { min-height: 44px; }
 }
+.project-scenario fieldset { border: 0; margin: .6rem 0; padding: 0; min-inline-size: 0; }
+.project-scenario legend { font-weight: 700; margin-bottom: .65rem; }
+.project-scenario label { display: flex; gap: .6rem; align-items: center; min-height: 44px; padding-block: .4rem; }
+.project-scenario p[role="status"]:empty { display: none; }
+.first-lesson-action { min-height: 44px; color: var(--purple); font-size: .9rem; }

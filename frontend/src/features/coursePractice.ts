@@ -97,24 +97,28 @@ const communicationSteps: PracticeSteps = {
   },
 };
 
-type CourseGuide = { topic: TopicId; steps: PracticeSteps; preparation: string };
+type CourseGuide = { topic: TopicId; steps: PracticeSteps; preparation: string; review: { title: string; text: string } };
 
 const pythonGuide: CourseGuide = {
   topic: 'python', steps: pythonSteps,
+  review: { title: 'Revisar arquivos e execução', text: 'Um arquivo .py guarda instruções. Escreva print("Olá") em ola.py e rode python3 ola.py no terminal ou no editor online. Ver Olá na saída confirma que o ambiente está pronto.' },
   preparation: 'Você pode começar do zero. Separe um editor de texto e um ambiente com Python 3, local ou online, em que possa criar e executar o arquivo tarefas.py.',
 };
 
 const courseGuides = new Map<string, CourseGuide>([
   ['Tecnologia/Git e GitHub para equipes', {
     topic: 'git', steps: gitSteps,
+    review: { title: 'Revisar repositório, branch e commit', text: 'O repositório guarda o histórico. Uma branch mantém uma linha de trabalho, e um commit registra uma alteração nessa linha. Rode git --version e confirme que consegue acessar sua conta do GitHub.' },
     preparation: 'Tenha o Git instalado e uma conta no GitHub com permissão para criar um repositório de treino. Confira a instalação com git --version e saiba abrir o terminal na pasta do projeto.',
   }],
   ['Design/Design de interfaces digitais', {
     topic: 'design', steps: designSteps,
+    review: { title: 'Revisar as partes de um formulário', text: 'O rótulo diz o que preencher, como E-mail. O campo recebe o valor, e o botão envia. Desenhe um exemplo e verifique se o rótulo continua visível depois de preencher.' },
     preparation: 'Você vai usar campos de texto, rótulos e botões. Separe papel e caneta ou um editor de protótipos e combine um teste curto com alguém que possa experimentar o formulário.',
   }],
   ['Negócios/Comunicação e liderança', {
     topic: 'comunicacao', steps: communicationSteps,
+    review: { title: 'Revisar fato, impacto e ação', text: 'Um fato pode ser conferido. O impacto mostra o efeito na equipe, e a ação define o próximo passo. Experimente reescrever A entrega atrasou como A revisão chegou após as 17h, então enviamos o trabalho no dia seguinte.' },
     preparation: 'Você pode usar o cenário fictício das aulas. Separe um editor de texto ou caderno e convide alguém para ler seu aviso e dizer o que entendeu.',
   }],
 ]);
