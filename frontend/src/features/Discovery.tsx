@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { C } from '../model';
 import { courseGuide, lessonTime, practiceTime } from './coursePractice';
 import type { TopicId } from './coursePractice';
-import { TaskPreview } from './TaskPreview';
+import { ProjectPreview } from './ProjectPreview';
 
 export const projectsUrl = '/?secao=projetos';
 export const topicsUrl = '/?secao=temas';
@@ -46,10 +46,10 @@ function ProjectCard({ topic, entry, open }: { topic: typeof topics[number]; ent
       <p className="project-metadata">{course.level} · {lessonTime(minutes)} de prática sugerida</p>
       <button className="primary" onClick={() => open(course.id)} aria-label={`Ver trilha: ${course.title}`}>Ver trilha</button>
     </div>
-    {topic.id === 'python' && <details className="project-demo">
+    <details className="project-demo">
       <summary>Experimentar a prévia</summary>
-      <TaskPreview/>
-    </details>}
+      <ProjectPreview topic={topic.id}/>
+    </details>
   </article>;
 }
 
