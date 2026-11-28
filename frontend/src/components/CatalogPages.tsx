@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'luc
 import type { C, E, U } from '../model';
 import { glyph, lessonCount, money } from '../presentation';
 import { lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
-import { hasWrittenPythonCourse } from '../features/pythonLessons';
+import { hasWrittenPythonCourse, lessonModules } from '../features/pythonLessons';
 import { projectTitle } from '../features/Discovery';
 import { ProjectAchievement } from '../features/ProjectAchievement';
 import { lazy, Suspense, useEffect, useRef } from 'react';
@@ -51,12 +51,19 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
         </details>
       </section>}
       <h2>Aulas do curso</h2>
-      <ol className="course-outline">{lessons.map((lesson, index) => <li key={lesson.id}
-        ref={index === selectedIndex ? highlightedLesson : undefined}
-        tabIndex={index === selectedIndex ? -1 : undefined}>
-        <div><strong>{lesson.title}</strong><small>{lesson.duration_seconds < 60 ? `${lesson.duration_seconds} s` : lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
-          {active && completed.has(lesson.id) && ' · Concluída'}</small></div>
-      </li>)}</ol>
+      {lessonModules(c).map(module => <div className="course-module" key={module.title ?? c.id}>
+        {module.title && <h3>{module.title}</h3>}
+        <ol className="course-outline" start={module.lessons.length ? lessons.indexOf(module.lessons[0]) + 1 : 1}>
+          {module.lessons.map(lesson => {
+            const highlighted = lessons[selectedIndex]?.id === lesson.id;
+            return <li key={lesson.id} ref={highlighted ? highlightedLesson : undefined} tabIndex={highlighted ? -1 : undefined}>
+              <strong>{lesson.title}</strong>
+              <small>{lesson.duration_seconds < 60 ? `${lesson.duration_seconds} s` : lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
+                {active && completed.has(lesson.id) && ' · Concluída'}</small>
+            </li>;
+          })}
+        </ol>
+      </div>)}
       {finished && delivery && <ProjectAchievement title={delivery} saved={c.project_url} save={saveProject}/>}
     </section><aside className="course-sidebar" aria-label="Matrícula e informações do curso">
       <div className={`thumb ${c.cover_color}`} aria-hidden="true">{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
