@@ -6,7 +6,9 @@ import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, readDiscoveryPage } from './features/Discovery';
-import { lessonModules, pythonLessonFor } from './features/pythonLessons';
+import { hasWrittenPythonCourse, lessonModules, pythonLessonFor } from './features/pythonLessons';
+import { PythonMaterials, PythonPractice } from './features/PythonPractice';
+import type { PracticeAnswers } from './features/PythonPractice';
 import { courseGuide } from './features/coursePractice';
 import { useScrollReveal } from './motion/useScrollReveal';
 import { motion, useReducedMotion } from 'motion/react';
@@ -172,8 +174,11 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
   const lessons = course.lessons ?? [];
   const assessment = course.assessment;
   const [selectedId, selectLesson] = useState(() => course.resume_lesson_id ?? lessons.find(lesson => !lesson.completed)?.id);
-  const [showQuiz, setShowQuiz] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
+  const [activity, setActivity] = useState<'quiz' | 'practice'>();
+  const [reviewing, setReviewing] = useState<'quiz' | 'practice'>();
+  const [practiceAnswers, setPracticeAnswers] = useState<PracticeAnswers>({});
+  const [checked, setChecked] = useState<PracticeAnswers>({});
+  const showQuiz = activity === 'quiz';
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [result, setResult] = useState<AssessmentResult>();
   const [quizError, setQuizError] = useState('');
@@ -185,8 +190,14 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
     if (selected && !reviewing) remember(course.id, selected);
   }, [course.id, selected?.id, remember, reviewing]);
   const focusHeading = () => requestAnimationFrame(() => document.getElementById('lesson-content-title')?.focus());
-  function returnToAssessment() {
-    setShowQuiz(true);
+  function openActivity(next: 'quiz' | 'practice') {
+    setActivity(next);
+    focusHeading();
+  }
+  function reviewLesson(lesson: L, from: 'quiz' | 'practice') {
+    selectLesson(lesson.id);
+    setReviewing(from);
+    setActivity(undefined);
     focusHeading();
   }
   async function submitQuiz(event: React.FormEvent<HTMLFormElement>) {
@@ -206,15 +217,29 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
           <h3>{module.title}</h3>
           <small>{module.lessons.filter(lesson => lesson.completed).length} de {module.lessons.length} {module.lessons.length === 1 ? 'concluída' : 'concluídas'}</small>
         </div>}
-        {module.lessons.map(lesson => <button className={selected?.id === lesson.id && !showQuiz ? 'chosen' : ''}
-          aria-current={selected?.id === lesson.id && !showQuiz ? 'step' : undefined}
-          key={lesson.id} onClick={() => { selectLesson(lesson.id); setReviewing(false); setShowQuiz(false); }}>
+        {module.lessons.map(lesson => <button className={selected?.id === lesson.id && !activity ? 'chosen' : ''}
+          aria-current={selected?.id === lesson.id && !activity ? 'step' : undefined}
+          key={lesson.id} onClick={() => { selectLesson(lesson.id); setReviewing(undefined); setActivity(undefined); }}>
           {lesson.completed ? '✓' : String(lessons.indexOf(lesson) + 1).padStart(2, '0')}　{lesson.title}
         </button>)}
       </div>)}
-      {assessment && <button onClick={returnToAssessment}>◎　{assessment.title}</button>}
+      {hasWrittenPythonCourse(course) && <button onClick={() => openActivity('practice')}>Praticar Python</button>}
+      {assessment && <button onClick={() => openActivity('quiz')}>◎　{assessment.title}</button>}
     </aside><section>
-      {showQuiz && assessment ? <form className="quiz" onSubmit={submitQuiz}>
+      {activity === 'practice' ? <PythonPractice answers={practiceAnswers} checked={checked}
+        choose={(id, option) => {
+          setPracticeAnswers(current => ({ ...current, [id]: option }));
+          setChecked(current => {
+            const next = { ...current };
+            delete next[id];
+            return next;
+          });
+        }}
+        check={() => setChecked(practiceAnswers)}
+        review={title => {
+          const lesson = lessons.find(item => item.title === title);
+          if (lesson) reviewLesson(lesson, 'practice');
+        }}/> : showQuiz && assessment ? <form className="quiz" onSubmit={submitQuiz}>
         <h2 id="lesson-content-title" tabIndex={-1}>{assessment.title}</h2>
         {result && <p role="status">Nota: {result.score}%. {result.passed ? 'Avaliação aprovada.' : 'Revise suas respostas.'} Tentativas restantes: {result.attempts_remaining}.</p>}
         {assessment.questions.map((question, index) => {
@@ -225,7 +250,7 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
               name={question.id} checked={answers[question.id] === position} disabled={submitting || result?.attempts_remaining === 0}
               onChange={() => setAnswers({...answers, [question.id]: position})}/>{option}</label>)}
             {needsReview && related && <button type="button" className="discovery-link" onClick={() => {
-              selectLesson(related.id); setReviewing(true); setShowQuiz(false); focusHeading();
+              reviewLesson(related, 'quiz');
             }}>Revisar aula: {related.title}</button>}
           </fieldset>;
         })}
@@ -233,7 +258,8 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
         <button className="primary" disabled={submitting || result?.attempts_remaining === 0
           || Object.keys(answers).length !== assessment.questions.length}>{submitting ? 'Enviando…' : 'Enviar respostas'}</button>
       </form> : selected && <>
-        {reviewing && <button className="discovery-link" onClick={returnToAssessment}>Voltar à avaliação</button>}
+        {reviewing && <button className="discovery-link" onClick={() => openActivity(reviewing)}>
+          {reviewing === 'practice' ? 'Voltar à prática' : 'Voltar à avaliação'}</button>}
         {!written && <div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div>}
         <small className="eyebrow">aula {String(lessons.indexOf(selected) + 1).padStart(2, '0')}</small>
         <h2 id="lesson-content-title" tabIndex={-1}>{selected.title}</h2>
@@ -245,6 +271,7 @@ function Learn({ course, remember, back, done, quiz }: LearnProps) {
           <div className="lesson-mission">
             <h3>Agora pratique</h3><p>{written.exercise}</p><p><strong>Como conferir.</strong> {written.check}</p>
           </div>
+          <PythonMaterials projectLesson={selected.title === 'Projeto: lista de tarefas'}/>
         </div> : <p>{selected.description}</p>}
         {mission && !written && <div className="lesson-mission"><small className="eyebrow">Missão prática · cerca de {mission.minutes} min</small>
           <h3>{mission.mission}</h3><p><strong>Como conferir</strong> · {mission.check}</p></div>}

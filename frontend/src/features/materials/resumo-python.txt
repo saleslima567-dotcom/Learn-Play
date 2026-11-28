@@ -1,0 +1,18 @@
+LearnPlay — Python do zero ao primeiro projeto
+
+1. Execução
+Salve seu código em tarefas.py e execute python tarefas.py (ou python3 tarefas.py).
+print("Olá") mostra texto no terminal.
+
+2. Listas
+tarefas = ["Revisar", "Praticar"]
+tarefas[1] = "Testar"
+A posição 0 é a primeira. Após a troca, a lista ainda tem dois itens.
+
+3. Condições e laços
+if not tarefas testa se a lista está vazia. for tarefa in tarefas percorre os itens.
+O recuo indica quais instruções pertencem a cada bloco.
+
+4. Projeto
+Cada tarefa é um dicionário com texto e estado. O menu usa 1 para adicionar,
+2 para listar, 3 para concluir e 0 para sair. A lista existe durante a execução.

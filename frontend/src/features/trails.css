@@ -118,3 +118,7 @@
 .lesson-module-heading h3, .course-module h3 { font-size: .95rem; font-weight: 750; margin: 0 0 .2rem; }
 .lesson-module-heading small { color: var(--muted); font-size: .8rem; }
 .course-module + .course-module { margin-top: 1.2rem; }
+
+.python-materials { border-top: 1px solid var(--line); margin: 1.25rem 0; padding-top: .75rem; }
+.python-materials h3 { font-weight: 750; }
+.python-materials a { margin-right: 1rem; }
