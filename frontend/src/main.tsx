@@ -149,6 +149,10 @@ return <div className="shell"><header onKeyDown={event => {
   `/api/v1/courses/${course.id}/assessments/${assessment.id}/attempts`,
   { method: 'POST', body: JSON.stringify({ answers }) },
 )}/>:course?<Detail c={course} selectedLesson={selectedLesson} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}
+  updateCertificate={async method => {
+    const data = await api<{verification_url:string} | undefined>(`/api/v1/me/certificates/${course.id}/share`, {method});
+    return data?.verification_url ?? null;
+  }}
   saveProject={async url => (await api<{project_url:string}>(`/api/v1/me/projects/${course.id}`, {
     method: 'PUT', body: JSON.stringify({url}),
   })).project_url}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}

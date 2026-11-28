@@ -225,6 +225,35 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/ValidationError' }
+  /me/certificates/{courseId}/share:
+    put:
+      tags: [Enrollments]
+      summary: Gerar ou recuperar o link público do certificado do aluno autenticado
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Link disponível
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verification_url: { type: string, format: uri-reference }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Enrollments]
+      summary: Desativar o link público do certificado
+      security: [{ SessionCookie: [], CsrfToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '204': { description: Link desativado ou inexistente }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /me/enrollments:
     get:
       tags: [Enrollments]
@@ -759,6 +788,11 @@ components:
         cover_color: { type: string }
         duration_minutes: { type: integer, minimum: 0 }
         lesson_count: { type: integer, minimum: 0 }
+        certificate_verification_url:
+          type: string
+          format: uri-reference
+          nullable: true
+          description: Link de verificação retornado na ficha privada do aluno que o emitiu.
         project_url:
           type: string
           format: uri

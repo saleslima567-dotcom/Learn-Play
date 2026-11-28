@@ -170,6 +170,45 @@ def test_assessment_attempts_are_limited_and_score_is_computed(client):
 
 
 
+def test_certificate_share_is_opt_in_and_can_be_revoked(client):
+    token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
+    headers = {'X-CSRF-Token': token}
+    course_id = next(row['id'] for row in client.get('/api/v1/courses').json['items'] if 'Python' in row['title'])
+    detail = f'/api/v1/courses/{course_id}'
+    share = f'/api/v1/me/certificates/{course_id}/share'
+    guest = client.application.test_client()
+    assert guest.put(share, headers={'X-CSRF-Token': csrf(guest)}).status_code == 401
+    assert client.put(share, headers=headers).status_code == 404
+    assert client.post(f'{detail}/enrollments', headers=headers).status_code == 201
+    assert client.put(share, headers=headers).status_code == 409
+    for section in client.get(f'{detail}/lessons').json['items']:
+        for lesson in section['lessons']:
+            assert client.put(f"/api/v1/lessons/{lesson['id']}/completion", headers=headers).status_code == 200
+    assert client.get(detail).json['certificate_verification_url'] is None
+
+    url = client.put(share, headers=headers).json['verification_url']
+    assert client.put(share, headers=headers).json['verification_url'] == url
+    assert client.get(detail).json['certificate_verification_url'] == url
+    assert 'certificate_verification_url' not in guest.get(detail).json
+    verification = guest.get(url)
+    assert verification.status_code == 200
+    assert verification.headers['Cache-Control'] == 'no-store'
+    assert 'noindex' in verification.headers['X-Robots-Tag']
+    page = verification.get_data(as_text=True)
+    assert 'Ana Martins' in page and 'aluna@learnplay.local' not in page
+    assert client.delete(share, headers=headers).status_code == 204
+    assert guest.get(url).status_code == 404
+    new = client.put(share, headers=headers).json['verification_url']
+    assert new != url
+    assert guest.get(new).status_code == 200
+
+    with client.application.app_context():
+        owner_id = User.query.filter_by(email='aluna@learnplay.local').first().id
+    admin = login(client, 'admin@learnplay.local', 'Admin123456!')
+    assert client.delete(f'/api/v1/admin/users/{owner_id}', headers={'X-CSRF-Token': admin}).status_code == 204
+    assert guest.get(new).status_code == 404
+
+
 def test_project_achievement_requires_completion_and_remains_private(client):
     token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
     headers = {'X-CSRF-Token': token}
