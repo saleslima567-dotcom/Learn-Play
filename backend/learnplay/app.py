@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from functools import wraps
+from urllib.parse import urlsplit
 
 from flask import Flask, current_app, g, jsonify, make_response, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
@@ -188,6 +189,12 @@ class Enrollment(db.Model):
     def public(self):
         return {'id': self.id, 'course_id': self.course_id, 'course': self.course.public(), 'status': self.status,
                 'created_at': self.created_at.isoformat(), 'progress_percent': progress_for(self.student_id, self.course_id)}
+
+
+class ProjectAchievement(db.Model):
+    student_id = db.Column(db.String(36), db.ForeignKey('user.id', ondelete='CASCADE'), primary_key=True)
+    course_id = db.Column(db.String(36), db.ForeignKey('course.id', ondelete='CASCADE'), primary_key=True)
+    url = db.Column(db.String(2048), nullable=False)
 
 
 class Favorite(db.Model):
@@ -487,6 +494,9 @@ def create_app(test_config=None):
         if g.user:
             enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course.id).first()
             data['enrollment_status'] = enrollment.status if enrollment else None
+            if enrollment and enrollment.status == 'active':
+                achievement = db.session.get(ProjectAchievement, (g.user.id, course_id))
+                data['project_url'] = achievement.url if achievement else None
             data['completed_lesson_ids'] = [x.lesson_id for x in LessonCompletion.query.join(Lesson).join(Section).filter(LessonCompletion.student_id == g.user.id, Section.course_id == course.id).all()]
         return jsonify(data)
 
@@ -542,6 +552,35 @@ def create_app(test_config=None):
                 if course_id not in targets:
                     targets[course_id] = {'id': lesson_id, 'title': title, 'saved': saved is not None}
         return jsonify(items=[{**item.public(), 'resume_lesson': targets.get(item.course_id)} for item in items])
+
+    @app.put('/api/v1/me/projects/<course_id>')
+    @require_user('student')
+    def save_project_achievement(course_id):
+        enrollment = Enrollment.query.filter_by(student_id=g.user.id, course_id=course_id, status='active').first()
+        if not enrollment or enrollment.course.status != 'published':
+            return problem(403, 'Matrícula ativa necessária')
+        published = Lesson.query.join(Section).filter(Section.course_id == course_id, Lesson.status == 'published')
+        completed_ids = db.session.query(LessonCompletion.lesson_id).filter_by(student_id=g.user.id)
+        if published.first() is None or published.filter(~Lesson.id.in_(completed_ids)).first() is not None:
+            return problem(409, 'Conclua todas as aulas antes de registrar a entrega')
+        body = request.get_json(silent=True)
+        url = body.get('url') if isinstance(body, dict) else None
+        if not isinstance(url, str) or len(url) > 2048:
+            return problem(422, 'Informe um link HTTPS válido')
+        url = url.strip()
+        try:
+            parsed = urlsplit(url)
+            valid = (parsed.scheme == 'https' and parsed.hostname and parsed.username is None
+                     and parsed.password is None and not any(ch.isspace() or ord(ch) < 32 or ch == '\\' for ch in url))
+        except ValueError:
+            valid = False
+        if not valid:
+            return problem(422, 'Informe um link HTTPS válido')
+        insert = pg_insert if db.engine.dialect.name == 'postgresql' else sqlite_insert
+        record = insert(ProjectAchievement).values(student_id=g.user.id, course_id=course_id, url=url)
+        db.session.execute(record.on_conflict_do_update(index_elements=['student_id', 'course_id'], set_={'url': url}))
+        db.session.commit()
+        return jsonify(project_url=url)
 
     @app.get('/api/v1/me/favorites')
     @require_user('student')
@@ -696,13 +735,14 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
         answers = (request.get_json(silent=True) or {}).get('answers', {})
         if not isinstance(answers, dict) or set(answers) != {q.id for q in questions} or any(type(answers[q.id]) is not int or not 0 <= answers[q.id] < len(q.options) for q in questions):
             return problem(422, 'Responda todas as questões')
-        correct = sum(1 for q in questions if str(answers.get(q.id)) == str(q.correct_option))
-        score = round(100 * correct / len(questions)) if questions else 0
+        incorrect_ids = [q.id for q in questions if answers[q.id] != q.correct_option]
+        score = round(100 * (len(questions) - len(incorrect_ids)) / len(questions)) if questions else 0
         attempt = AssessmentAttempt(assessment_id=assessment_id, student_id=g.user.id, attempt_number=len(previous) + 1, score=score)
         db.session.add(attempt)
         db.session.commit()
         return jsonify(attempt_number=attempt.attempt_number, score=score, passed=score >= assessment.passing_score,
-                       best_score=max([x.score for x in previous] + [score]), attempts_remaining=assessment.max_attempts - attempt.attempt_number)
+                       best_score=max([x.score for x in previous] + [score]), attempts_remaining=assessment.max_attempts - attempt.attempt_number,
+                       incorrect_question_ids=incorrect_ids)
 
     @app.get('/api/v1/instructor/courses')
     @require_user('instructor', 'admin')
@@ -865,6 +905,7 @@ h1{{margin:44px 0 12px;font-size:clamp(38px,6vw,66px);font-weight:400}}.intro{{f
         enrollment_ids = db.session.query(Enrollment.id).filter_by(student_id=user.id).subquery()
         PaymentEvent.query.filter(PaymentEvent.enrollment_id.in_(enrollment_ids)).delete(synchronize_session=False)
         AssessmentAttempt.query.filter_by(student_id=user.id).delete(synchronize_session=False)
+        ProjectAchievement.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         CourseResume.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         LessonCompletion.query.filter_by(student_id=user.id).delete(synchronize_session=False)
         Favorite.query.filter_by(student_id=user.id).delete(synchronize_session=False)

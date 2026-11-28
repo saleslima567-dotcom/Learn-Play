@@ -3,6 +3,8 @@ import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'luc
 import type { C, E, U } from '../model';
 import { glyph, money } from '../presentation';
 import { lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
+import { projectTitle } from '../features/Discovery';
+import { ProjectAchievement } from '../features/ProjectAchievement';
 import { ProjectPreview } from '../features/ProjectPreview';
 import { lazy, Suspense, useEffect, useRef } from 'react';
 
@@ -11,10 +13,10 @@ const StudyProgress = lazy(() => import('../features/StudyProgress').then(module
 export function InfoPage({type,back}:{type:'about'|'help';back:()=>void}){const about=type==='about',cards=about?[['Cursos práticos','Conteúdo organizado em aulas e avaliações para acompanhar seu aprendizado.'],['Para aprender e ensinar','A plataforma demonstra áreas para alunos, professores e administração.'],['Protótipo acadêmico','Matrícula paga, player e notificações são demonstrativos; não há cobrança nem transmissão de vídeo.']]:[['Como começo um curso?','Abra um curso no catálogo, faça login ou crie sua conta e solicite a matrícula.'],['Como concluo as aulas?','Entre em “meus cursos”, abra a aula e marque-a como concluída. O progresso é atualizado pela plataforma.'],['Como obtenho o certificado?','Depois de concluir todas as aulas de um curso, abra os detalhes e use “emitir certificado”. A página permite imprimir ou salvar como PDF.'],['Há pagamentos ou vídeos reais?','Não neste protótipo. A confirmação de pagamento é simulada e o player apenas ilustra a tela da aula.']];return <main className="dash info-page"><button className="back" onClick={back}>← voltar ao catálogo</button><small className="eyebrow">{about?'sobre a LearnPlay':'central de ajuda'}</small><h1>{about?<>Aprender <em>abre caminhos.</em></>:<>Como podemos <em>ajudar?</em></>}</h1><p>{about?'Uma demonstração de plataforma de cursos online, com catálogo, matrícula, acompanhamento de aulas e avaliações.':'Respostas sobre os fluxos disponíveis e os limites desta demonstração.'}</p><div className="info-grid">{cards.map(([title,body])=><article className="info-card" key={title}><span>✦</span><h2>{title}</h2><p>{body}</p></article>)}</div><button className="primary" onClick={back}>explorar cursos　→</button></main>}
 type DetailProps = {
   c: C; user: U | null; enrollment?: E; back: () => void;
-  join: () => void; learn: () => void; login: () => void; start: () => void; showPreview: boolean; selectedLesson?: string;
+  join: () => void; learn: () => void; login: () => void; start: () => void; showPreview: boolean; saveProject: (url: string) => Promise<string>; selectedLesson?: string;
 };
 
-export function Detail({ c, user, enrollment, back, join, learn, login, start, showPreview, selectedLesson }: DetailProps) {
+export function Detail({ c, user, enrollment, back, join, learn, login, start, showPreview, saveProject, selectedLesson }: DetailProps) {
   const lessons = c.lessons ?? [];
   const highlightedLesson = useRef<HTMLLIElement>(null);
   const selectedIndex = selectedLesson ? lessons.findIndex(lesson => lesson.title === selectedLesson) : -1;
@@ -26,6 +28,7 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
   const practiceMinutes = practiceTime(c);
   const active = enrollment?.status === 'active' || c.enrollment_status === 'active';
   const completed = new Set(c.completed_lesson_ids);
+  const delivery = projectTitle(c);
   const finished = active && lessons.length > 0 && lessons.every(lesson => completed.has(lesson.id));
   return <main className="detail">
     <button className="back" onClick={back}><ArrowLeft size={14}/> Voltar para cursos</button>
@@ -59,6 +62,7 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
           {active && completed.has(lesson.id) && ' · Concluída'}</small></div>
         {steps[lesson.title] && <p>{steps[lesson.title].mission}</p>}
       </li>)}</ol>
+      {finished && delivery && <ProjectAchievement title={delivery} saved={c.project_url} save={saveProject}/>}
     </section><aside>
       <div className={`thumb ${c.cover_color}`}>{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
       <button className="primary wide" onClick={active ? learn : user ? join : login}>
@@ -74,9 +78,9 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
   </main>;
 }
 export function Favorites({items,open,toggle,explore}:{items:C[];open:(id:string)=>void;toggle:(c:C)=>void;explore:()=>void}){return <main className="dash favorites-page"><small className="eyebrow">sua lista pessoal</small><h1>cursos <em>favoritos.</em></h1><p>guarde cursos para voltar a eles quando quiser.</p>{!items.length?<div className="emptybox"><Heart/><h2>seus favoritos começam aqui</h2><p>salve um curso no catálogo e ele aparecerá nesta lista.</p><button className="primary" onClick={explore}>explorar cursos　→</button></div>:<div className="grid">{items.map(c=><article className="card" key={c.id}><button className={`cover ${c.cover_color}`} onClick={()=>open(c.id)}><small>{c.category.toUpperCase()}</small><b>{glyph(c.cover_color)}</b><span>{c.level}</span></button><div className="cardbody"><small className="meta"><span><Clock3 size={12}/> {lessonTime(c.duration_minutes)} de aulas</span><span><BookOpen size={12}/> {c.lesson_count} aulas</span></small><button className="ctitle" onClick={()=>open(c.id)}>{c.title}</button><small className="teacher">◉　com {c.instructor}</small><div className="cardfoot"><b>{money(c.price)}</b><div className="card-actions"><button className="favorite-toggle active" title="Remover dos favoritos" aria-label="Remover dos favoritos" aria-pressed={true} onClick={()=>toggle(c)}><Heart size={15} fill="currentColor"/></button><button onClick={()=>open(c.id)} aria-label="Ver curso"><ArrowRight size={16}/></button></div></div></div></article>)}</div>}</main>}
-type MineProps = { items: E[]; open: (course: C, lessonId?: string) => void; explore: () => void };
+type MineProps = { items: E[]; open: (course: C, lessonId?: string) => void; detail: (id: string) => void; explore: () => void };
 
-export function Mine({ items, open, explore }: MineProps) {
+export function Mine({ items, open, detail, explore }: MineProps) {
   const active = items.filter(item => item.status === 'active');
   return <main className="dash">
     <small className="eyebrow">seu espaço de aprendizagem</small><h1>continue de <em>onde parou.</em></h1>
@@ -102,6 +106,7 @@ export function Mine({ items, open, explore }: MineProps) {
                   {lesson ? `${action}: ${lesson.title}` : `${action} curso`}
                 </button>
               : <p>Aguardando a publicação da primeira aula.</p>}
+            {progress === 100 && <button className="back first-lesson-action" onClick={() => detail(course.id)}>Ver conclusão</button>}
           </div>
         </article>;
       })}</div></>}

@@ -138,11 +138,38 @@ def test_assessment_attempts_are_limited_and_score_is_computed(client):
     answers = {q['id']: 0 for q in assessment['questions']}
     first = client.post(f"/api/v1/courses/{course['id']}/assessments/{assessment['id']}/attempts", json={'answers': answers}, headers={'X-CSRF-Token': token})
     assert first.status_code == 200 and first.json['score'] == 50
+    assert first.json['incorrect_question_ids'] == [assessment['questions'][1]['id']]
     for _ in range(2):
         client.post(f"/api/v1/courses/{course['id']}/assessments/{assessment['id']}/attempts", json={'answers': answers}, headers={'X-CSRF-Token': token})
     blocked = client.post(f"/api/v1/courses/{course['id']}/assessments/{assessment['id']}/attempts", json={'answers': answers}, headers={'X-CSRF-Token': token})
     assert blocked.status_code == 409
 
+
+
+def test_project_achievement_requires_completion_and_remains_private(client):
+    token = login(client, 'aluna@learnplay.local', 'Aluno12345!')
+    headers = {'X-CSRF-Token': token}
+    course_id = next(row['id'] for row in client.get('/api/v1/courses').json['items'] if 'Python' in row['title'])
+    detail = f'/api/v1/courses/{course_id}'
+    path = f'/api/v1/me/projects/{course_id}'
+    url = 'https://example.test/student/project'
+    assert client.put(path, json={'url': url}, headers=headers).status_code == 403
+    assert client.post(f'{detail}/enrollments', headers=headers).status_code == 201
+    assert client.put(path, json={'url': url}, headers=headers).status_code == 409
+    for section in client.get(f'{detail}/lessons').json['items']:
+        for lesson in section['lessons']:
+            assert client.put(f"/api/v1/lessons/{lesson['id']}/completion", headers=headers).status_code == 200
+
+    assert client.put(path, json={'url': 'http://example.test'}, headers=headers).status_code == 422
+    assert client.put(path, json={'url': url}, headers=headers).json['project_url'] == url
+    updated = 'https://example.test/student/final'
+    assert client.put(path, json={'url': updated}, headers=headers).json['project_url'] == updated
+    assert client.get(detail).json['project_url'] == updated
+
+    other = client.application.test_client()
+    assert 'project_url' not in other.get(detail).json
+    instructor = login(other, 'professor@learnplay.local', 'Professor123!')
+    assert other.put(path, json={'url': url}, headers={'X-CSRF-Token': instructor}).status_code == 403
 
 
 def test_payment_webhook_signature_and_duplicate_event_are_idempotent(client, monkeypatch):

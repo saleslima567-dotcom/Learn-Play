@@ -1,7 +1,8 @@
 // TypeScript / frontend/src/main.tsx / React 19 + Vite 8 / LearnPlay web client
 import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import{ArrowRight,GraduationCap,LogOut,Moon,Play,Search,Sun,X}from'lucide-react';import { Detail, Favorites, InfoPage, Mine } from './components/CatalogPages';
 import { Dialog } from 'radix-ui';
-import type { U, L, A, C, E } from './model';
+import { WeeklyMission } from './features/WeeklyMission';
+import type { U, L, A, C, E, AssessmentResult } from './model';
 import { money } from './presentation';
 import { CourseExplorer } from './features/CourseExplorer';
 import { Discovery, projectsUrl, readDiscoveryPage, topicsUrl } from './features/Discovery';
@@ -21,7 +22,7 @@ async function api<T>(path:string,init:RequestInit={},csrfRetry=false):Promise<T
 const cats=['Todos','Programação','Design','Tecnologia','Negócios'];
 function App(){const queryClient = useQueryClient();const[user,SUser]=useState<U|null>(null),[enrollments,SE]=useState<E[]>([]),[favorites,SFav]=useState<C[]>([]),[course,SActive]=useState<C|null>(null),[cat,SCat]=useState(''),[level,setLevel]=useState(''),[search,SS]=useState(''),[view,setView]=useState<string>(readDiscoveryPage),[selectedLesson,setSelectedLesson]=useState<string>(),[modal,SM]=useState(''),[loading,SL]=useState(true),[drawer,SD]=useState(false),[theme,STheme]=useState<'light'|'dark'>(()=>{try{return localStorage.getItem('learnplay-theme')==='dark'?'dark':'light'}catch{return'light'}});useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.classList.toggle('dark',theme==='dark');document.documentElement.style.colorScheme=theme;try{localStorage.setItem('learnplay-theme',theme)}catch{}},[theme]);const note=(message:string)=>toast(message,{duration:4500});const reduceMotion=useReducedMotion();
 function SV(next: string) {
-  if (readDiscoveryPage() !== 'home' && next !== 'topics' && next !== 'projects') {
+  if (readDiscoveryPage() !== 'home' && next !== 'topics' && next !== 'projects' && next !== 'weekly') {
     const url = new URL(window.location.href);
     url.searchParams.delete('secao');
     url.searchParams.delete('tema');
@@ -109,8 +110,14 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
   event.stopPropagation();
   SM('login');
 }}>Entrar</button>}{user&&<button onClick={()=>{SV('mine');SActive(null)}}>meus cursos</button>}{user?.role==='student'&&<button onClick={()=>{SV('favorites');SActive(null)}}>favoritos</button>}{user?.role==='instructor'&&<button onClick={()=>{SV('teacher');SActive(null)}}>ensinar</button>}{user?.role==='admin'&&<button onClick={()=>{SV('admin');SActive(null)}}>administração</button>}</nav><div className="headright"><button className="icon theme-toggle" onClick={()=>STheme(theme==='dark'?'light':'dark')} title={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'} aria-label={theme==='dark'?'Ativar tema claro':'Ativar tema escuro'}>{theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}</button><button className="searchicon" aria-label="Buscar cursos" onClick={()=>{SActive(null);SV('home');requestAnimationFrame(()=>document.getElementById('search')?.focus())}}><Search size={18}/></button>{user?<><span className="hello">{user.name.split(' ')[0]}</span><button className="icon" onClick={()=>void logout()} title="sair"><LogOut size={16}/></button></>:<><button className="plain" onClick={()=>SM('login')}>entrar</button><button className="primary tiny" onClick={()=>SM('register')}>criar conta <ArrowRight size={14}/></button></>}</div><button className="hamb" type="button" aria-label={drawer?'Fechar menu':'Abrir menu'} aria-expanded={drawer} aria-controls="primary-navigation" onClick={()=>SD(!drawer)}>☰</button></header><Toaster theme={theme} position="top-right" closeButton visibleToasts={3} duration={4500} toastOptions={{className:'learnplay-toast'}} />
-<motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={async(a,answers)=>{try{const r=await api<{score:number;passed:boolean;best_score:number}>(`/api/v1/courses/${course.id}/assessments/${a.id}/attempts`,{method:'POST',body:JSON.stringify({answers})});note(`nota: ${r.score}%. ${r.passed?'avaliação aprovada!':`melhor nota ${r.best_score}%.`}`)}catch(e){note((e as Error).message)}}}/>:course?<Detail c={course} selectedLesson={selectedLesson} showPreview={showPreview} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
-  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='mine'?<Mine items={enrollments} open={learn} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main><section className="hero trail-hero">
+<motion.div className="page-transition" key={`${course?.id??'none'}:${view}`} initial={reduceMotion?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.28,ease:'easeOut'}}>{loading?<div className="loading" role="status" aria-live="polite">carregando LearnPlay...</div>:course&&view==='learn'?<Learn course={course} remember={rememberLesson} back={()=>{SActive(null);SV('mine')}} done={async l=>{try{await api(`/api/v1/lessons/${l.id}/completion`,{method:'PUT'});await learn(course);await refresh();note('aula concluída. progresso atualizado.')}catch(e){note((e as Error).message)}}} quiz={(assessment, answers) => api<AssessmentResult>(
+  `/api/v1/courses/${course.id}/assessments/${assessment.id}/attempts`,
+  { method: 'POST', body: JSON.stringify({ answers }) },
+)}/>:course?<Detail c={course} selectedLesson={selectedLesson} showPreview={showPreview} user={user} enrollment={enrollments.find(e=>e.course_id===course.id)} back={()=>SActive(null)} join={()=>void join(course)} learn={()=>void learn(course)} login={()=>SM('login')} start={()=>startCourse(course)}
+  saveProject={async url => (await api<{project_url:string}>(`/api/v1/me/projects/${course.id}`, {
+    method: 'PUT', body: JSON.stringify({url}),
+  })).project_url}/> :view==='projects'||view==='topics'?<Discovery mode={view} courses={courses} open={open}
+  pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>:view==='weekly'?<WeeklyMission/>:view==='mine'?<Mine items={enrollments} open={learn} detail={open} explore={()=>SV('home')}/>:view==='favorites'?<Favorites items={favorites} open={open} toggle={toggleFavorite} explore={()=>SV('home')}/>:view==='teacher'?<Teacher note={note}/>:view==='about'?<InfoPage type="about" back={()=>SV('home')}/>:view==='help'?<InfoPage type="help" back={()=>SV('home')}/>:view==='admin'?<Admin note={note} currentUserId={user?.id||''}/>:<><main><section className="hero trail-hero">
   <div><small className="eyebrow">Catálogo LearnPlay</small>
     <h1>O que você quer <em>aprender?</em></h1>
     <p>Escolha uma trilha pelo seu objetivo ou encontre uma aula pelo assunto.</p>
@@ -126,16 +133,82 @@ return <div className="shell"><header><button className="brand" onClick={()=>{SA
   setCategory={SCat} setLevel={setLevel} setSearch={SS} open={open} learn={learn} toggle={toggleFavorite}
   pending={courseQuery.isPending} failed={courseQuery.isError} retry={()=>void courseQuery.refetch()}/>
 <section className="banner" data-reveal><i><GraduationCap/></i><div><b>ensina algo que você domina?</b><small>compartilhe sua experiência com quem quer aprender.</small></div><button onClick={()=>user?.role==='instructor'?SV('teacher'):SM('register')}>conheça a área de ensino　→</button></section></main><footer><b className="footbrand">▣ LearnPlay</b><small>© 2026 LearnPlay · aprender abre caminhos</small><div className="footer-links"><button onClick={()=>{SActive(null);SV('home')}}>cursos</button><button onClick={()=>SV('about')}>sobre</button><button onClick={()=>SV('help')}>ajuda</button></div></footer></>}</motion.div>{modal&&<Auth mode={modal} close={()=>{startAfterAuth.current=null;SM('')}} submit={auth} setMode={SM}/>}</div>}
-function Learn({course,remember,back,done,quiz}:{course:C;remember:(courseId:string,lesson:L)=>void;back:()=>void;done:(l:L)=>void;quiz:(a:A,x:Record<string,number>)=>void}){const lessons=course.lessons ?? [];
-const [selectedId,selectLesson]=useState(() => course.resume_lesson_id ?? lessons.find(lesson=>!lesson.completed)?.id ?? lessons[0]?.id);
-const selected=lessons.find(lesson=>lesson.id===selectedId) ?? lessons.find(lesson=>!lesson.completed) ?? lessons[0];
-const mission=selected ? courseGuide(course)?.steps[selected.title] : undefined;
-const [q,SQ]=useState(false),[answers,SA]=useState<Record<string,number>>({});useEffect(()=>{
-  if(selected) remember(course.id, selected);
-},[course.id,selected?.id,remember]);return <main className="learning"><div className="learnhead"><button className="back" onClick={back}>← meus cursos</button>　{course.title}</div><div className="learnlayout"><aside><b>CONTEÚDO DO CURSO</b>{course.lessons?.map((l,i)=><button className={selected?.id===l.id&&!q?'chosen':''} key={l.id} onClick={()=>{selectLesson(l.id);SQ(false)}}>{l.completed?'✓':String(i+1).padStart(2,'0')}　{l.title}</button>)}{course.assessment&&<button onClick={()=>SQ(true)}>◎　{course.assessment.title}</button>}</aside><section>{q&&course.assessment?<div className="quiz"><small className="eyebrow">fixe o que aprendeu</small><h2>{course.assessment.title}</h2>{course.assessment.questions.map((x,i)=><fieldset key={x.id}><legend>{i+1}. {x.prompt}</legend>{x.options.map((o,j)=><label key={j}><input type="radio" name={x.id} checked={answers[x.id]===j} onChange={()=>SA({...answers,[x.id]:j})}/>{o}</label>)}</fieldset>)}<button className="primary" disabled={Object.keys(answers).length!==course.assessment.questions.length} onClick={()=>quiz(course.assessment!,answers)}>enviar respostas</button></div>:selected&&<><div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div><small className="eyebrow">aula {String((course.lessons||[]).indexOf(selected)+1).padStart(2,'0')}</small><h2>{selected.title}</h2><p>{selected.description}</p>
-{mission && <div className="lesson-mission"><small className="eyebrow">Missão prática · cerca de {mission.minutes} min</small>
-<h3>{mission.mission}</h3><p><strong>Como conferir</strong> · {mission.check}</p></div>}
-<button className="primary" disabled={selected.completed} onClick={()=>done(selected)}>{selected.completed?'✓ aula concluída':'marcar como concluída　✓'}</button></>}</section></div></main>}
+type LearnProps = {
+  course: C; remember: (courseId: string, lesson: L) => void;
+  back: () => void; done: (lesson: L) => void;
+  quiz: (assessment: A, answers: Record<string, number>) => Promise<AssessmentResult>;
+};
+
+function Learn({ course, remember, back, done, quiz }: LearnProps) {
+  const lessons = course.lessons ?? [];
+  const assessment = course.assessment;
+  const [selectedId, selectLesson] = useState(() => course.resume_lesson_id ?? lessons.find(lesson => !lesson.completed)?.id);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [result, setResult] = useState<AssessmentResult>();
+  const [quizError, setQuizError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const selected = lessons.find(lesson => lesson.id === selectedId) ?? lessons.find(lesson => !lesson.completed) ?? lessons[0];
+  const mission = selected ? courseGuide(course)?.steps[selected.title] : undefined;
+  useEffect(() => {
+    if (selected && !reviewing) remember(course.id, selected);
+  }, [course.id, selected?.id, remember, reviewing]);
+  const focusHeading = () => requestAnimationFrame(() => document.getElementById('lesson-content-title')?.focus());
+  function returnToAssessment() {
+    setShowQuiz(true);
+    focusHeading();
+  }
+  async function submitQuiz(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!assessment || submitting) return;
+    setSubmitting(true);
+    setQuizError('');
+    try { setResult(await quiz(assessment, answers)); }
+    catch (error) { setQuizError((error as Error).message); }
+    finally { setSubmitting(false); }
+  }
+  return <main className="learning">
+    <div className="learnhead"><button className="back" onClick={back}>← meus cursos</button>　{course.title}</div>
+    <div className="learnlayout"><aside><b>CONTEÚDO DO CURSO</b>
+      {lessons.map((lesson, index) => <button className={selected?.id === lesson.id && !showQuiz ? 'chosen' : ''}
+        key={lesson.id} onClick={() => { selectLesson(lesson.id); setReviewing(false); setShowQuiz(false); }}>
+        {lesson.completed ? '✓' : String(index + 1).padStart(2, '0')}　{lesson.title}
+      </button>)}
+      {assessment && <button onClick={returnToAssessment}>◎　{assessment.title}</button>}
+    </aside><section>
+      {showQuiz && assessment ? <form className="quiz" onSubmit={submitQuiz}>
+        <h2 id="lesson-content-title" tabIndex={-1}>{assessment.title}</h2>
+        {result && <p role="status">Nota: {result.score}%. {result.passed ? 'Avaliação aprovada.' : 'Revise suas respostas.'} Tentativas restantes: {result.attempts_remaining}.</p>}
+        {assessment.questions.map((question, index) => {
+          const needsReview = result?.incorrect_question_ids.includes(question.id);
+          const related = question.prompt === 'Qual é uma boa forma de consolidar o aprendizado?' ? lessons.at(-1) : lessons[0];
+          return <fieldset key={question.id}><legend>{index + 1}. {question.prompt}</legend>
+            {question.options.map((option, position) => <label key={position}><input type="radio"
+              name={question.id} checked={answers[question.id] === position} disabled={submitting || result?.attempts_remaining === 0}
+              onChange={() => setAnswers({...answers, [question.id]: position})}/>{option}</label>)}
+            {needsReview && related && <button type="button" className="discovery-link" onClick={() => {
+              selectLesson(related.id); setReviewing(true); setShowQuiz(false); focusHeading();
+            }}>Revisar aula: {related.title}</button>}
+          </fieldset>;
+        })}
+        {quizError && <p role="alert">{quizError}</p>}
+        <button className="primary" disabled={submitting || result?.attempts_remaining === 0
+          || Object.keys(answers).length !== assessment.questions.length}>{submitting ? 'Enviando…' : 'Enviar respostas'}</button>
+      </form> : selected && <>
+        {reviewing && <button className="discovery-link" onClick={returnToAssessment}>Voltar à avaliação</button>}
+        <div className="video"><Play aria-hidden="true" fill="currentColor"/><small>AULA DEMONSTRATIVA · PLAYER DE VÍDEO</small></div>
+        <small className="eyebrow">aula {String(lessons.indexOf(selected) + 1).padStart(2, '0')}</small>
+        <h2 id="lesson-content-title" tabIndex={-1}>{selected.title}</h2><p>{selected.description}</p>
+        {mission && <div className="lesson-mission"><small className="eyebrow">Missão prática · cerca de {mission.minutes} min</small>
+          <h3>{mission.mission}</h3><p><strong>Como conferir</strong> · {mission.check}</p></div>}
+        <button className="primary" disabled={selected.completed} onClick={() => done(selected)}>
+          {selected.completed ? '✓ aula concluída' : 'marcar como concluída　✓'}</button>
+      </>}
+    </section></div>
+  </main>;
+}
+
 function Teacher({note}:{note:(s:string)=>void}){const queryClient=useQueryClient();const[items,SI]=useState<C[]>([]),[f,SF]=useState({title:'',description:'',category:'Programação',level:'Iniciante',price:'0'});useEffect(()=>{void api<{items:C[]}>('/api/v1/instructor/courses').then(x=>SI(x.items)).catch(e=>note(e.message))},[]);async function create(e:React.FormEvent){e.preventDefault();try{const r=await api<{course:C}>('/api/v1/instructor/courses',{method:'POST',body:JSON.stringify({...f,price:Number(f.price)})});SI([r.course,...items]);SF({...f,title:'',description:''});note('rascunho criado. inclua e publique ao menos uma aula para publicar o curso.')}catch(x){note((x as Error).message)}}async function addLesson(c:C){const title=prompt('Título da nova aula');if(!title)return;try{await api(`/api/v1/instructor/courses/${c.id}/lessons`,{method:'POST',body:JSON.stringify({title,description:'Aula criada pelo professor',duration_seconds:600,status:'published'})});note('aula adicionada e publicada.');SI((await api<{items:C[]}>('/api/v1/instructor/courses')).items)}catch(x){note((x as Error).message)}}async function saveQuiz(c:C){try{await api(`/api/v1/instructor/courses/${c.id}/assessment`,{method:'PUT',body:JSON.stringify({title:'Avaliação do curso',passing_score:70,max_attempts:3,questions:[{prompt:'Qual a melhor maneira de consolidar o conteúdo?',options:['Praticar em um projeto','Pular as aulas'],correct_option:0}]})});note('avaliação demonstrativa configurada.')}catch(x){note((x as Error).message)}}async function publish(c:C){try{await api(`/api/v1/instructor/courses/${c.id}`,{method:'PATCH',body:JSON.stringify({status:'published'})});note('curso publicado no catálogo.');await queryClient.invalidateQueries({queryKey:['catalog','courses']});SI((await api<{items:C[]}>('/api/v1/instructor/courses')).items)}catch(x){note((x as Error).message)}}return <main className="dash"><small className="eyebrow">painel do professor</small><h1>compartilhe o que <em>você sabe.</em></h1><div className="panels"><form className="panel" onSubmit={create}><h2>novo curso</h2><label>título<input required minLength={4} value={f.title} onChange={e=>SF({...f,title:e.target.value})}/></label><label>descrição<textarea required value={f.description} onChange={e=>SF({...f,description:e.target.value})}/></label><label>categoria<select value={f.category} onChange={e=>SF({...f,category:e.target.value})}>{cats.slice(1).map(x=><option key={x}>{x}</option>)}</select></label><label>nível<select value={f.level} onChange={e=>SF({...f,level:e.target.value})}>{['Iniciante','Intermediário','Avançado','Todos os níveis'].map(x=><option key={x}>{x}</option>)}</select></label><label>preço em reais<input type="number" min="0" step=".01" value={f.price} onChange={e=>SF({...f,price:e.target.value})}/></label><button className="primary wide">criar rascunho →</button></form><section className="panel"><h2>seus cursos · {items.length}</h2>{items.map(c=><div className="row" key={c.id}><b>{c.title}</b><small>{c.status} · {c.lesson_count} aulas</small><div className="rowactions"><button onClick={()=>void addLesson(c)}>+ aula</button><button onClick={()=>void saveQuiz(c)}>avaliação</button><button onClick={()=>void publish(c)}>publicar</button></div></div>)}</section></div></main>}
 function Admin({note,currentUserId}:{note:(s:string)=>void;currentUserId:string}){const[items,SI]=useState<U[]>([]),[query,SQ]=useState('');async function load(){SI((await api<{items:U[]}>('/api/v1/admin/users')).items)}useEffect(()=>{void load().catch(e=>note(e.message))},[]);async function role(u:U,r:string){try{await api(`/api/v1/admin/users/${u.id}`,{method:'PATCH',body:JSON.stringify({role:r})});await load();note('perfil atualizado.')}catch(e){note((e as Error).message)}}async function toggleStatus(u:U){try{await api(`/api/v1/admin/users/${u.id}`,{method:'PATCH',body:JSON.stringify({status:u.status==='active'?'suspended':'active'})});await load();note(u.status==='active'?'acesso suspenso.':'acesso reativado.')}catch(e){note((e as Error).message)}}async function removeStudent(u:U){if(u.role!=='student')return;if(!window.confirm(`Excluir permanentemente o aluno ${u.name} (${u.email})? Matrículas, favoritos e progresso também serão apagados.`))return;try{await api(`/api/v1/admin/users/${u.id}`,{method:'DELETE'});await load();note('aluno excluído do site e do banco de dados.')}catch(e){note((e as Error).message)}}const visible=items.filter(u=>`${u.name} ${u.email} ${u.role} ${u.status}`.toLowerCase().includes(query.trim().toLowerCase()));return <main className="dash"><small className="eyebrow">área administrativa</small><h1>visão geral da <em>plataforma.</em></h1><section className="panel"><h2>usuários · {items.length}</h2><div className="admin-tools"><label className="search"><Search size={15}/><input aria-label="Buscar por nome, e-mail, perfil ou estado" value={query} onChange={e=>SQ(e.target.value)} placeholder="buscar nome, e-mail ou perfil"/></label><small>{visible.length} encontrados</small></div>{visible.length?visible.map(u=><div className="row adminrow" key={u.id}><b>{u.name}<small>{u.email} · {u.status==='active'?'ativo':'suspenso'}</small></b><div className="admin-actions"><select aria-label={`Perfil de ${u.name}`} disabled={u.id===currentUserId} value={u.role} onChange={e=>void role(u,e.target.value)}><option value="student">aluno</option><option value="instructor">professor</option><option value="admin">administrador</option></select><button className="status-action" disabled={u.id===currentUserId} onClick={()=>void toggleStatus(u)}>{u.status==='active'?'suspender':'reativar'}</button>{u.role==='student'&&<button className="delete-action" onClick={()=>void removeStudent(u)}>excluir</button>}</div></div>):<p className="empty">nenhum usuário corresponde à busca.</p>}</section></main>}
 const authSchema=z.object({name:z.string().optional(),email:z.email('Informe um e-mail válido.'),password:z.string().min(10,'A senha precisa ter ao menos 10 caracteres.')});

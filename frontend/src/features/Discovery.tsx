@@ -6,6 +6,7 @@ import { ProjectPreview } from './ProjectPreview';
 
 export const projectsUrl = '/?secao=projetos';
 export const topicsUrl = '/?secao=temas';
+export const weeklyUrl = '/?secao=missao';
 
 const topics = [
   { id: 'python', name: 'Python', description: 'Use listas, condições e laços para escrever seus primeiros programas.',
@@ -23,7 +24,13 @@ export function readDiscoveryPage() {
   const section = params.get('secao');
   if (section === 'projetos') return 'projects';
   if (section === 'temas') return 'topics';
+  if (section === 'missao') return 'weekly';
   return 'home';
+}
+
+export function projectTitle(course: C) {
+  const guide = courseGuide(course);
+  return topics.find(topic => topic.id === guide?.topic)?.project;
 }
 
 const topicUrl = (id: TopicId) => `${topicsUrl}&tema=${id}`;
@@ -81,7 +88,10 @@ export function Discovery({ mode, courses, open, pending, failed, retry }: Props
       <h1>{topic?.name ?? (mode === 'projects' ? 'Projetos práticos' : 'Explore por tema')}</h1>
       <p>{topic?.description ?? (mode === 'projects' ? 'Escolha o que você quer construir e abra a trilha que ensina cada etapa.' :
         'Encontre trilhas, aulas e projetos sobre o que você quer aprender.')}</p>
-      {mode === 'projects' && <a className="discovery-link" href={topicsUrl}>Explorar por tema</a>}
+      {mode === 'projects' && <div className="discovery-actions">
+        <a className="discovery-link" href={topicsUrl}>Explorar por tema</a>
+        <a className="discovery-link" href={weeklyUrl}>Missão da semana</a>
+      </div>}
       {mode === 'topics' && !topic && <a className="discovery-link" href={projectsUrl}>Ver todos os projetos</a>}
     </div>
 
