@@ -1,7 +1,7 @@
 // Public course catalog/detail and student-facing information pages.
 import { ArrowLeft, ArrowRight, BookOpen, Clock3, Heart, ShieldCheck } from 'lucide-react';
 import type { C, E, U } from '../model';
-import { glyph, money } from '../presentation';
+import { glyph, lessonCount, money } from '../presentation';
 import { lessonTime, levelGuides, courseGuide, practiceTime } from '../features/coursePractice';
 import { projectTitle } from '../features/Discovery';
 import { ProjectAchievement } from '../features/ProjectAchievement';
@@ -32,7 +32,7 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
     <button className="back" onClick={back}><ArrowLeft size={14}/> Voltar</button>
     <div className="detailgrid"><section>
       <small className="eyebrow">{c.category} · {c.level}</small><h1>{c.title}</h1><p>{c.description}</p>
-      <div className="course-facts"><span>{c.lesson_count} aulas</span><span>{lessonTime(c.duration_minutes)} de aulas</span>
+      <div className="course-facts"><span>{lessonCount(c.lesson_count)}</span><span>{lessonTime(c.duration_minutes)} de aulas</span>
         {practiceMinutes > 0 && <span>Prática sugerida · cerca de {practiceMinutes} min</span>}</div>
       {levelGuides[c.level] && <p><strong>Para quem é</strong> · {levelGuides[c.level]}</p>}
       {guide && <section aria-labelledby="course-prerequisites">
@@ -53,25 +53,34 @@ export function Detail({ c, user, enrollment, back, join, learn, login, start, s
       <ol className="course-outline">{lessons.map((lesson, index) => <li key={lesson.id}
         ref={index === selectedIndex ? highlightedLesson : undefined}
         tabIndex={index === selectedIndex ? -1 : undefined}>
-        <div><strong>{lesson.title}</strong><small>{lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
+        <div><strong>{lesson.title}</strong><small>{lesson.duration_seconds < 60 ? `${lesson.duration_seconds} s` : lessonTime(Math.round(lesson.duration_seconds / 60))} de aula
           {active && completed.has(lesson.id) && ' · Concluída'}</small></div>
       </li>)}</ol>
       {finished && delivery && <ProjectAchievement title={delivery} saved={c.project_url} save={saveProject}/>}
-    </section><aside>
-      <div className={`thumb ${c.cover_color}`}>{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
+    </section><aside className="course-sidebar" aria-label="Matrícula e informações do curso">
+      <div className={`thumb ${c.cover_color}`} aria-hidden="true">{glyph(c.cover_color)}</div><b className="price">{money(c.price)}</b>
       <button className="primary wide" onClick={active ? learn : user ? join : login}>
         {finished ? 'Revisar aulas' : active ? 'Abrir sala de aula' : 'Matricular-se'} <ArrowRight size={16}/></button>
       {!active && c.lesson_count > 0 && (!user || user.role === 'student') && <button
         className="back first-lesson-action" onClick={start}>Começar primeira aula</button>}
       <small className="secure"><ShieldCheck size={13}/> {active ? 'Matrícula ativa' : 'Acesso após confirmação'}</small>
-      <hr/><b>O curso inclui</b><p>{c.lesson_count} aulas demonstrativas</p>
-      {c.assessment && <p>Avaliação de conhecimentos</p>}<p>Certificado imprimível após a conclusão</p>
+      <section className="course-inclusions" aria-labelledby="course-inclusions-title">
+        <h2 id="course-inclusions-title">O curso inclui</h2>
+        <ul>
+          <li>{lessonCount(c.lesson_count)} {c.lesson_count === 1 ? 'demonstrativa' : 'demonstrativas'}</li>
+          {c.assessment && <li>Avaliação de conhecimentos</li>}
+          <li>Certificado imprimível após a conclusão</li>
+        </ul>
+      </section>
       {finished && <a className="primary wide certificate-link" href={`/api/v1/me/certificates/${c.id}`} target="_blank" rel="noreferrer">Emitir certificado</a>}
-      <hr/><small>Instrutor</small><b>{c.instructor}</b>
+      <dl className="course-instructor">
+        <dt>{c.instructor_is_demo ? 'Docente demonstrativo' : 'Instrutor'}</dt>
+        <dd>{c.instructor}</dd>
+      </dl>
     </aside></div>
   </main>;
 }
-export function Favorites({items,open,toggle,explore}:{items:C[];open:(id:string)=>void;toggle:(c:C)=>void;explore:()=>void}){return <main className="dash favorites-page"><small className="eyebrow">sua lista pessoal</small><h1>cursos <em>favoritos.</em></h1><p>guarde cursos para voltar a eles quando quiser.</p>{!items.length?<div className="emptybox"><Heart/><h2>seus favoritos começam aqui</h2><p>salve um curso no catálogo e ele aparecerá nesta lista.</p><button className="primary" onClick={explore}>explorar cursos　→</button></div>:<div className="grid">{items.map(c=><article className="card" key={c.id}><button className={`cover ${c.cover_color}`} onClick={()=>open(c.id)}><small>{c.category.toUpperCase()}</small><b>{glyph(c.cover_color)}</b><span>{c.level}</span></button><div className="cardbody"><small className="meta"><span><Clock3 size={12}/> {lessonTime(c.duration_minutes)} de aulas</span><span><BookOpen size={12}/> {c.lesson_count} aulas</span></small><button className="ctitle" onClick={()=>open(c.id)}>{c.title}</button><small className="teacher">◉　com {c.instructor}</small><div className="cardfoot"><b>{money(c.price)}</b><div className="card-actions"><button className="favorite-toggle active" title="Remover dos favoritos" aria-label="Remover dos favoritos" aria-pressed={true} onClick={()=>toggle(c)}><Heart size={15} fill="currentColor"/></button><button onClick={()=>open(c.id)} aria-label="Ver curso"><ArrowRight size={16}/></button></div></div></div></article>)}</div>}</main>}
+export function Favorites({items,open,toggle,explore}:{items:C[];open:(id:string)=>void;toggle:(c:C)=>void;explore:()=>void}){return <main className="dash favorites-page"><small className="eyebrow">sua lista pessoal</small><h1>cursos <em>favoritos.</em></h1><p>guarde cursos para voltar a eles quando quiser.</p>{!items.length?<div className="emptybox"><Heart/><h2>seus favoritos começam aqui</h2><p>salve um curso no catálogo e ele aparecerá nesta lista.</p><button className="primary" onClick={explore}>explorar cursos　→</button></div>:<div className="grid">{items.map(c=><article className="card" key={c.id}><button className={`cover ${c.cover_color}`} onClick={()=>open(c.id)}><small>{c.category.toUpperCase()}</small><b>{glyph(c.cover_color)}</b><span>{c.level}</span></button><div className="cardbody"><small className="meta"><span><Clock3 size={12}/> {lessonTime(c.duration_minutes)} de aulas</span><span><BookOpen size={12}/> {lessonCount(c.lesson_count)}</span></small><button className="ctitle" onClick={()=>open(c.id)}>{c.title}</button><small className="teacher">◉　com {c.instructor}</small><div className="cardfoot"><b>{money(c.price)}</b><div className="card-actions"><button className="favorite-toggle active" title="Remover dos favoritos" aria-label="Remover dos favoritos" aria-pressed={true} onClick={()=>toggle(c)}><Heart size={15} fill="currentColor"/></button><button onClick={()=>open(c.id)} aria-label="Ver curso"><ArrowRight size={16}/></button></div></div></div></article>)}</div>}</main>}
 type MineProps = { items: E[]; open: (course: C, lessonId?: string) => void; detail: (id: string) => void; explore: () => void };
 
 export function Mine({ items, open, detail, explore }: MineProps) {
@@ -94,7 +103,7 @@ export function Mine({ items, open, detail, explore }: MineProps) {
           <div className={`mycover ${course.cover_color}`}>{glyph(course.cover_color)}</div>
           <div><small>CURSO · {course.level.toUpperCase()}</small><h3>{course.title}</h3>
             <div className="progress"><i style={{width: `${progress}%`}}/></div>
-            <small>{progress}% concluído · {course.lesson_count} aulas</small>
+            <small>{progress}% concluído · {lessonCount(course.lesson_count)}</small>
             {course.lesson_count > 0
               ? <button className="primary wide resume-action" onClick={() => open(course, lesson?.id)}>
                   {lesson ? `${action}: ${lesson.title}` : `${action} curso`}

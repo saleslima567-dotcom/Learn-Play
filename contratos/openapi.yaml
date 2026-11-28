@@ -749,6 +749,9 @@ components:
         title: { type: string }
         description: { type: string }
         instructor: { type: string }
+        instructor_is_demo:
+          type: boolean
+          description: Indica que o nome exibido pertence a um perfil fictício do catálogo demonstrativo.
         price: { type: number, minimum: 0 }
         category: { type: string }
         level: { type: string }

@@ -79,3 +79,22 @@
 .project-achievement form { display: grid; gap: .6rem; }
 .project-achievement input { width: 100%; min-height: 44px; font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: .5rem; }
 .project-achievement button { justify-self: start; }
+
+.detail aside.course-sidebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: .75rem;
+  top: 5.75rem;
+}
+.course-sidebar .secure { grid-column: 1; margin: 0; }
+.course-sidebar .first-lesson-action { justify-self: center; }
+.course-inclusions, .course-instructor { border-top: 1px solid var(--line); padding-top: .9rem; margin: .25rem 0 0; }
+.course-inclusions h2, .course-instructor dd { color: var(--ink); font-size: 1rem; font-weight: 700; margin: 0; }
+.course-inclusions ul { color: var(--muted); padding-inline-start: 1.15rem; margin: .45rem 0 0; line-height: 1.5; }
+.course-inclusions li + li { margin-top: .3rem; }
+.course-instructor dt { color: var(--muted); font-size: .875rem; margin-bottom: .25rem; }
+.course-instructor dd { overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .detail aside.course-sidebar { position: static; }
+}

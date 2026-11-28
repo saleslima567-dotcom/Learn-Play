@@ -1,6 +1,6 @@
 import { Heart, Search } from 'lucide-react';
 import type { C, E } from '../model';
-import { glyph, money } from '../presentation';
+import { glyph, lessonCount, money } from '../presentation';
 import { categoryGoals, lessonTime, levelGuides, normalizeSearch } from './coursePractice';
 
 type Props = {
@@ -54,7 +54,7 @@ export function CourseExplorer(props: Props) {
             <small>{course.category}</small><b aria-hidden="true">{glyph(course.cover_color)}</b><span>{course.level}</span>
           </button>
           <div className="cardbody">
-            <small className="meta">{course.lesson_count} aulas · {lessonTime(course.duration_minutes)}</small>
+            <small className="meta">{lessonCount(course.lesson_count)} · {lessonTime(course.duration_minutes)}</small>
             <h3><button className="ctitle" onClick={() => props.open(course.id)}>{course.title}</button></h3>
             <small className="teacher">Com {course.instructor}</small>
             {matches.length > 0 && <p className="lesson-hit">Aula encontrada · {matches.join(' · ')}</p>}
